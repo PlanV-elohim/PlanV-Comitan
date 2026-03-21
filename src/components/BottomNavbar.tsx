@@ -9,7 +9,7 @@ export default function BottomNavbar() {
         { icon: Home, label: 'Inicio', href: '#inicio' },
         { icon: Tent, label: 'Eventos', href: '#campamentos' },
         { icon: User, label: 'Portal', href: '/portal' },
-        { icon: MessageCircle, label: 'Chat', href: 'https://wa.me/521234567890', external: true },
+        { icon: MessageCircle, label: 'Chat', href: 'https://wa.me/529633989055', external: true },
     ];
 
     if (isAdmin) {

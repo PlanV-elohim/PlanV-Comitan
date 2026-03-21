@@ -24,6 +24,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || import.meta.env.VITE_ADMIN_EMAIL || '').split(',').map((e: string) => e.trim().toLowerCase());
+
         // Check Supabase session on mount
         supabase.auth.getSession().then(({ data: { session } }) => {
             const currentUser = session?.user ?? null;
@@ -31,9 +33,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             // Verify admin status
             const adminSession = localStorage.getItem('adminAuth');
-            if (adminSession === 'true' && currentUser?.email === import.meta.env.VITE_ADMIN_EMAIL) {
+            const isUserAdmin = currentUser?.email && adminEmails.includes(currentUser.email.toLowerCase());
+
+            if (adminSession === 'true' && isUserAdmin) {
                 setIsAdmin(true);
-            } else if (!currentUser || currentUser?.email !== import.meta.env.VITE_ADMIN_EMAIL) {
+            } else if (!currentUser || !isUserAdmin) {
                 setIsAdmin(false);
                 localStorage.removeItem('adminAuth');
             }
@@ -45,7 +49,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const currentUser = session?.user ?? null;
             setUser(currentUser);
             
-            if (currentUser?.email === import.meta.env.VITE_ADMIN_EMAIL && localStorage.getItem('adminAuth') === 'true') {
+            const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || import.meta.env.VITE_ADMIN_EMAIL || '').split(',').map((e: string) => e.trim().toLowerCase());
+            const isUserAdmin = currentUser?.email && adminEmails.includes(currentUser.email.toLowerCase());
+
+            if (isUserAdmin && localStorage.getItem('adminAuth') === 'true') {
                 setIsAdmin(true);
             }
         });
@@ -57,7 +64,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         
-        if (data.user?.email === import.meta.env.VITE_ADMIN_EMAIL) {
+        const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || import.meta.env.VITE_ADMIN_EMAIL || '').split(',').map((e: string) => e.trim().toLowerCase());
+        const isUserAdmin = data.user?.email && adminEmails.includes(data.user.email.toLowerCase());
+
+        if (isUserAdmin) {
             localStorage.setItem('adminAuth', 'true');
             setIsAdmin(true);
             return true;

@@ -11,7 +11,7 @@ export async function uploadToStorage(bucket: string, path: string, file: File):
     return publicUrl;
 }
 
-export const supabaseApi = {
+const rawApi = {
     camps: {
         getAll: async () => {
             const { data, error } = await supabase.from('camps').select('*').order('created_at', { ascending: false });
@@ -234,3 +234,51 @@ export const supabaseApi = {
         }
     }
 };
+
+const logAdminAction = async (actionType: string, tableName: string, details: any) => {
+    try {
+        if (localStorage.getItem('adminAuth') === 'true') {
+            const { data } = await supabase.auth.getSession();
+            const email = data?.session?.user?.email;
+            if (email) {
+                await supabase.from('admin_logs').insert([{
+                    admin_email: email,
+                    action_type: actionType,
+                    table_name: tableName,
+                    details: JSON.parse(JSON.stringify(details))
+                }]);
+            }
+        }
+    } catch (e) {
+        console.error('Audit log failed', e);
+    }
+};
+
+const createProxy = (obj: any, path: string = ''): any => {
+    return new Proxy(obj, {
+        get(target, prop: string) {
+            const value = target[prop];
+            const currentPath = path ? `${path}.${prop}` : prop;
+            
+            if (typeof value === 'object' && value !== null) {
+                return createProxy(value, currentPath);
+            }
+            
+            if (typeof value === 'function') {
+                return async (...args: any[]) => {
+                    const result = await value.apply(target, args);
+                    
+                    if (['create', 'update', 'delete', 'markRead', 'grant', 'setActive', 'upsert'].includes(prop)) {
+                        const tableName = currentPath.split('.')[0];
+                        await logAdminAction(prop.toUpperCase(), tableName, { args });
+                    }
+                    
+                    return result;
+                };
+            }
+            return value;
+        }
+    });
+};
+
+export const supabaseApi = createProxy(rawApi);
