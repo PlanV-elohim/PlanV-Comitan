@@ -1,13 +1,35 @@
 import { useState, FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { X, CheckCircle2 } from 'lucide-react';
+import Confetti from './Confetti';
+import { playSuccessSound } from '../lib/sound';
 
 export default function JoinModal({ onClose }: { onClose: () => void }) {
     const [step, setStep] = useState(1);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        setStep(2);
+        setIsSubmitting(true);
+        try {
+            const { supabaseApi } = await import('../lib/api');
+            await supabaseApi.messages.create({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                message: "Interés en unirse al Plan V desde el modal principal."
+            });
+            setStep(2);
+            setShowConfetti(true);
+            playSuccessSound();
+        } catch (error) {
+            console.error('Failed to submit message:', error);
+            alert("Hubo un error al enviar tu mensaje. Por favor intenta de nuevo.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -40,15 +62,15 @@ export default function JoinModal({ onClose }: { onClose: () => void }) {
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Nombre completo</label>
-                                    <input required type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="Juan Pérez" />
+                                    <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="Juan Pérez" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Correo Electrónico</label>
-                                    <input required type="email" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="juan@ejemplo.com" />
+                                    <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="juan@ejemplo.com" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Teléfono</label>
-                                    <input required type="tel" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="+52 000 000 0000" />
+                                    <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="+52 000 000 0000" />
                                 </div>
 
                                 <div className="pt-4">
@@ -56,9 +78,10 @@ export default function JoinModal({ onClose }: { onClose: () => void }) {
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         type="submit"
-                                        className="w-full bg-dark text-white py-4 rounded-xl font-medium hover:bg-primary transition-colors duration-300"
+                                        disabled={isSubmitting}
+                                        className="w-full bg-dark text-white py-4 rounded-xl font-medium hover:bg-primary transition-colors duration-300 disabled:opacity-70"
                                     >
-                                        Enviar Información
+                                        {isSubmitting ? 'Enviando...' : 'Enviar Información'}
                                     </motion.button>
                                 </div>
                             </form>
@@ -85,6 +108,8 @@ export default function JoinModal({ onClose }: { onClose: () => void }) {
                         </motion.div>
                     )}
                 </div>
+                {/* Visual Confetti Reaction */}
+                <Confetti active={showConfetti} />
             </motion.div>
         </motion.div>
     );

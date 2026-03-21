@@ -31,7 +31,7 @@ export default function Values() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, amount: 0.1 }}
                     className="text-center mb-16"
                 >
                     <div className="inline-block px-4 py-2 bg-red-50 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
@@ -48,7 +48,7 @@ export default function Values() {
                             key={val.title}
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: true, amount: 0.1 }}
                             transition={{ delay: i * 0.1 }}
                             whileHover={{ y: -8 }}
                             className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center group hover:shadow-xl transition-shadow duration-300"

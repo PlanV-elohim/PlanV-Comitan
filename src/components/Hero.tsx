@@ -1,105 +1,157 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { supabaseApi } from '../lib/api';
+
+const FALLBACK_BG = 'https://picsum.photos/seed/campvid/1920/1080';
 
 export default function Hero() {
     const ref = useRef(null);
     const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
     const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
     const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    const [heroBg, setHeroBg] = useState(FALLBACK_BG);
+    const [heroMobileBg, setHeroMobileBg] = useState(FALLBACK_BG);
+    const [imageHasTextDesktop, setImageHasTextDesktop] = useState(false);
+    const [imageHasTextMobile, setImageHasTextMobile] = useState(false);
+
+    useEffect(() => {
+        Promise.all([
+            // Desktop
+            supabaseApi.gallery.getAll('hero_bg'),
+            supabaseApi.gallery.getAll('hero_bg_text'),
+            // Mobile
+            supabaseApi.gallery.getAll('hero_mobile'),
+            supabaseApi.gallery.getAll('hero_mobile_text'),
+        ]).then(([desktopNormal, desktopText, mobileNormal, mobileText]) => {
+            
+            // --- DESKTOP HERO ---
+            const activeDesktopNormal = desktopNormal.find((i: any) => i.is_active);
+            const activeDesktopText = desktopText.find((i: any) => i.is_active);
+            if (activeDesktopText?.image_url) {
+                setHeroBg(activeDesktopText.image_url);
+                setImageHasTextDesktop(true);
+            } else if (activeDesktopNormal?.image_url) {
+                setHeroBg(activeDesktopNormal.image_url);
+                setImageHasTextDesktop(false);
+            }
+
+            // --- MOBILE HERO ---
+            const activeMobileNormal = mobileNormal.find((i: any) => i.is_active);
+            const activeMobileText = mobileText.find((i: any) => i.is_active);
+            if (activeMobileText?.image_url) {
+                setHeroMobileBg(activeMobileText.image_url);
+                setImageHasTextMobile(true);
+            } else if (activeMobileNormal?.image_url) {
+                setHeroMobileBg(activeMobileNormal.image_url);
+                setImageHasTextMobile(false);
+            } else {
+                // Fallback: If no mobile image uploaded, use desktop image for mobile too
+                setHeroMobileBg(activeDesktopText?.image_url || activeDesktopNormal?.image_url || FALLBACK_BG);
+                setImageHasTextMobile(Boolean(activeDesktopText?.image_url));
+            }
+
+        }).catch(() => {});
+    }, []);
 
     return (
-        <section id="inicio" ref={ref} className="relative min-h-screen flex items-center overflow-hidden">
-            {/* Parallax background with Ken Burns effect */}
-            <motion.div
-                style={{ y }}
-                className="absolute inset-0 z-0 overflow-hidden"
-            >
-                <motion.img
-                    src="https://picsum.photos/seed/campvid/1920/1080"
-                    alt=""
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                    initial={{ scale: 1 }}
-                    animate={{ scale: 1.15 }}
-                    transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+        <section id="inicio" ref={ref} className="relative min-h-screen flex items-center overflow-hidden bg-black">
+            {/* Background Container */}
+            <motion.div style={{ y, willChange: "transform" }} className="absolute inset-0 z-0 bg-black">
+                {/* Desktop Image with Gradient Fade */}
+                <div className="absolute right-0 top-0 bottom-0 w-[66%] hidden md:block">
+                    <div
+                        style={{ backgroundImage: `url(${heroBg})` }}
+                        className="w-full h-full bg-contain bg-right lg:bg-center bg-no-repeat"
+                    />
+                    {/* Seamless fade mask from solid black on the left to transparent */}
+                    <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent pointer-events-none" />
+                    {/* Optional full dim if imageHasText */}
+                    <div className={`absolute inset-0 transition-opacity duration-500 ${imageHasTextDesktop ? 'bg-black/30' : 'bg-transparent'}`} />
+                </div>
+                
+                {/* Mobile Image (No zoom) */}
+                <div
+                    style={{ backgroundImage: `url(${heroMobileBg})` }}
+                    className="w-full h-[80%] absolute top-0 bg-contain bg-top bg-no-repeat block md:hidden mt-[100px]"
                 />
-                <div className="absolute inset-0 bg-dark/70" />
+                <div className={`absolute inset-0 transition-opacity duration-500 block md:hidden ${imageHasTextMobile ? 'bg-black/40' : 'bg-black/60'}`} />
             </motion.div>
 
+            {/* Overlay text — hidden when the image already has text (controlled by CSS) */}
             <motion.div
-                style={{ opacity }}
-                className="relative z-10 max-w-7xl mx-auto px-6 py-32 md:py-48 w-full"
+                style={{ opacity, willChange: "opacity" }}
+                className={`absolute inset-0 z-10 pointer-events-none flex justify-center w-full ${imageHasTextMobile ? 'hidden md:flex' : ''} ${imageHasTextDesktop ? 'md:hidden' : ''}`}
             >
-                <div className="max-w-3xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                    >
-                        <div className="inline-block px-4 py-2 bg-primary/20 backdrop-blur-sm text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-8 border border-primary/30">
-                            Plan V Elohim — Chiapas, México
+                <div className="w-full max-w-7xl px-6 pt-[105px] md:pt-[110px] flex justify-center md:justify-start">
+                        <div className="w-full md:w-1/3 text-center md:text-left relative z-20">
+                            <motion.h1
+                                initial="hidden"
+                                animate="visible"
+                                className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight tracking-wide text-white drop-shadow-[0_4px_35px_rgba(0,0,0,1)] flex flex-col items-center md:items-start"
+                                style={{ fontFamily: "'Cinzel', serif" }}
+                            >
+                                <span className="block mb-2 text-center md:text-left">
+                                    {"Descubre tu".split("").map((char, i) => (
+                                        <motion.span
+                                            key={i}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.05, delay: i * 0.3 }}
+                                            className="inline-block"
+                                        >
+                                            {char === " " ? "\u00A0" : char}
+                                        </motion.span>
+                                    ))}
+                                    {/* Typewriter Cursor */}
+                                    <motion.span
+                                        animate={{ opacity: [1, 0, 1] }}
+                                        transition={{ duration: 0.8, repeat: Infinity, times: [0, 0.5, 1] }}
+                                        className="inline-block w-[3px] h-8 md:h-12 lg:h-16 bg-red-600 ml-1 align-bottom"
+                                    />
+                                </span>
+                                <motion.span 
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 3.8, duration: 0.5 }}
+                                    className="relative overflow-hidden inline-block px-4 py-1 bg-red-600 text-white italic rounded-sm shadow-lg whitespace-nowrap group"
+                                >
+                                    Propósito
+                                    {/* Premium Shine Effect */}
+                                    <motion.div
+                                        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -skew-x-12"
+                                        initial={{ x: '-150%' }}
+                                        animate={{ x: '150%' }}
+                                        transition={{ 
+                                            duration: 1.2, 
+                                            ease: "easeInOut",
+                                            repeat: Infinity, 
+                                            repeatDelay: 5,
+                                            delay: 5.0
+                                        }}
+                                    />
+                                </motion.span>
+                            </motion.h1>
                         </div>
-                    </motion.div>
+                    </div>
+            </motion.div>
 
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight mb-8 text-white"
-                    >
-                        Descubre tu
-                        <br />
-                        <span className="text-primary">propósito</span>
-                    </motion.h1>
-
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.6 }}
-                        className="text-lg md:text-xl text-gray-300 mb-10 max-w-xl leading-relaxed"
-                    >
-                        Únete a nuestros campamentos y retiros espirituales. Un espacio diseñado para reconectar, crecer y encontrar tu propósito en Dios.
-                    </motion.p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.8 }}
-                        className="flex flex-wrap gap-4"
-                    >
-                        <a
-                            href="#campamentos"
-                            className="bg-primary text-white px-8 py-4 rounded-full font-medium hover:bg-white hover:text-dark transition-all duration-300 hover:shadow-lg hover:shadow-primary/30 flex items-center gap-2 group"
-                        >
-                            Ver Campamentos
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </a>
-                        <a
-                            href="#nosotros"
-                            className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-full font-medium hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
-                        >
-                            ▶ Conoce Más
-                        </a>
-                    </motion.div>
-                </div>
-
-                {/* Scroll indicator */}
+            {/* Scroll indicator — always visible */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+                className="absolute bottom-10 left-1/2 -translate-x-1/2"
+            >
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.5 }}
-                    className="absolute bottom-10 left-1/2 -translate-x-1/2"
+                    animate={{ y: [0, 12, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"
                 >
-                    <motion.div
-                        animate={{ y: [0, 12, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"
-                    >
-                        <div className="w-1.5 h-3 bg-white/60 rounded-full" />
-                    </motion.div>
+                    <div className="w-1.5 h-3 bg-white/60 rounded-full" />
                 </motion.div>
             </motion.div>
         </section>
     );
 }
+

@@ -1,124 +1,53 @@
-import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { CampEvent } from './types';
-import { ThemeProvider } from './context/ThemeContext';
-
-import SplashScreen from './components/SplashScreen';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Countdown from './components/Countdown';
-import UpcomingEvents from './components/UpcomingEvents';
-import Stats from './components/Stats';
-import Values from './components/Values';
-import Gallery from './components/Gallery';
-import Testimonials from './components/Testimonials';
-import FAQ from './components/FAQ';
-import AboutUs from './components/AboutUs';
-import MapSection from './components/MapSection';
-import Footer from './components/Footer';
-import CalendarModal from './components/CalendarModal';
-import CampInfoModal from './components/CampInfoModal';
-import RegistrationModal from './components/RegistrationModal';
-import JoinModal from './components/JoinModal';
-import WhatsAppButton from './components/WhatsAppButton';
-import ScrollToTop from './components/ScrollToTop';
-import ThemeToggle from './components/ThemeToggle';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Portal from './pages/Portal';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminLogin from './pages/admin/AdminLogin';
+import DashboardOverview from './pages/admin/DashboardOverview';
+import CampsManager from './pages/admin/CampsManager';
+import RegistrationsManager from './pages/admin/RegistrationsManager';
+import TimelineManager from './pages/admin/TimelineManager';
+import GalleryManager from './pages/admin/GalleryManager';
+import ContactManager from './pages/admin/ContactManager';
+import QRScanner from './pages/admin/QRScanner';
+import CabinsManager from './pages/admin/CabinsManager';
+import ItineraryManager from './pages/admin/ItineraryManager';
+import RegisterPage from './pages/RegisterPage';
+import MedicalFormPage from './pages/MedicalFormPage';
+import { ToastProvider } from './components/ui/Toast';
+import { ConfirmDialogProvider } from './components/ui/ConfirmDialog';
+import { AuthProvider } from './lib/auth';
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [selectedCamp, setSelectedCamp] = useState<CampEvent | null>(null);
-  const [infoCamp, setInfoCamp] = useState<CampEvent | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
-
-  useEffect(() => {
-    if (showSplash || selectedCamp || showCalendar || showJoin || infoCamp) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showSplash, selectedCamp, showCalendar, showJoin, infoCamp]);
-
   return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-primary selection:text-white transition-colors duration-300">
-        <AnimatePresence>
-          {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-        </AnimatePresence>
-
-        {!showSplash && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-          >
-            <Navbar onJoin={() => setShowJoin(true)} />
-            <ThemeToggle />
-            <main>
-              <Hero />
-              <Countdown />
-              <UpcomingEvents
-                onRegister={(camp) => setSelectedCamp(camp)}
-                onOpenCalendar={() => setShowCalendar(true)}
-                onInfo={(camp) => setInfoCamp(camp)}
-              />
-              <Stats />
-              <Values />
-              <Gallery />
-              <Testimonials />
-              <FAQ />
-              <AboutUs />
-              <MapSection />
-            </main>
-            <Footer />
-            <WhatsAppButton />
-            <ScrollToTop />
-          </motion.div>
-        )}
-
-        <AnimatePresence>
-          {showCalendar && (
-            <CalendarModal
-              onClose={() => setShowCalendar(false)}
-              onRegister={(camp) => {
-                setShowCalendar(false);
-                setSelectedCamp(camp);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {infoCamp && (
-            <CampInfoModal
-              camp={infoCamp}
-              onClose={() => setInfoCamp(null)}
-              onRegister={(camp) => {
-                setInfoCamp(null);
-                setSelectedCamp(camp);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {selectedCamp && (
-            <RegistrationModal
-              camp={selectedCamp}
-              onClose={() => setSelectedCamp(null)}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showJoin && (
-            <JoinModal onClose={() => setShowJoin(false)} />
-          )}
-        </AnimatePresence>
-      </div>
-    </ThemeProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <ConfirmDialogProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/portal" element={<Portal />} />
+            <Route path="/ficha-medica/:id" element={<MedicalFormPage />} />
+            <Route path="/registro/:id" element={<RegisterPage />} />
+            
+            {/* Rutas de Administración */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<DashboardOverview />} />
+              <Route path="campamentos" element={<CampsManager />} />
+              <Route path="cabanas" element={<CabinsManager />} />
+              <Route path="reservaciones" element={<RegistrationsManager />} />
+              <Route path="scanner" element={<QRScanner />} />
+              <Route path="timeline" element={<TimelineManager />} />
+              <Route path="galeria" element={<GalleryManager />} />
+              <Route path="contacto" element={<ContactManager />} />
+              <Route path="itinerario" element={<ItineraryManager />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+        </ConfirmDialogProvider>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
+

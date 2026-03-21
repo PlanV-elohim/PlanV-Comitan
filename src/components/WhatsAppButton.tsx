@@ -1,9 +1,15 @@
 import { motion } from 'motion/react';
 
-export default function WhatsAppButton() {
-    const phoneNumber = "529630000000";
-    const message = encodeURIComponent("¡Hola! Me interesa saber más sobre los campamentos de Plan V Elohim.");
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+interface WhatsAppButtonProps {
+    phoneNumber?: string;
+    message?: string;
+}
+
+export default function WhatsAppButton({ 
+    phoneNumber = "529630000000", 
+    message = "¡Hola! Me interesa saber más sobre los campamentos de Plan V Elohim." 
+}: WhatsAppButtonProps) {
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     return (
         <motion.a

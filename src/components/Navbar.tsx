@@ -1,26 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
+import MagneticButton from './ui/MagneticButton';
+import { useAuth } from '../lib/auth';
 
 export default function Navbar({ onJoin }: { onJoin: () => void }) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    const { user, isAdmin } = useAuth();
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const links = [
-        { href: "#inicio", label: "Inicio" },
-        { href: "#campamentos", label: "Campamentos" },
-        { href: "#nosotros", label: "Nosotros" },
-        { href: "#contacto", label: "Contacto" },
+        { href: "/#inicio", label: "Inicio" },
+        { href: "/#campamentos", label: "Campamentos" },
+        { href: "/#nosotros", label: "Nosotros" },
+        { href: "/#contacto", label: "Contacto" }
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+            scrolled ? 'bg-black/95 backdrop-blur-md shadow-lg' : 'bg-black/80 backdrop-blur-sm'
+        }`}>
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                <div className="font-bold text-2xl tracking-tight">
+                <div className="font-bold text-2xl tracking-tight text-white">
                     PLAN <span className="text-primary">V</span>
                 </div>
 
                 {/* Desktop links */}
-                <div className="hidden md:flex items-center gap-8 font-medium text-sm">
+                <div className="hidden md:flex items-center gap-8 font-medium text-sm text-gray-300">
                     {links.map(link => (
                         <a key={link.href} href={link.href} className="hover:text-primary transition-colors">
                             {link.label}
@@ -28,25 +41,32 @@ export default function Navbar({ onJoin }: { onJoin: () => void }) {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={onJoin}
-                        className="bg-dark text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-primary transition-colors duration-300"
-                    >
-                        Unirse
-                    </motion.button>
+                <div className="flex items-center gap-2">
+                    {/* Profile / CTA button - Hidden on mobile if bottom nav is active */}
+                    {(user || isAdmin) ? (
+                        <a href="/portal" className="hidden md:flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-primary to-orange-500 text-white rounded-full shadow-lg shadow-primary/30 hover:scale-110 transition-transform border-2 border-white/20">
+                            <User className="w-5 h-5" />
+                        </a>
+                    ) : (
+                        <div className="hidden md:block">
+                            <MagneticButton>
+                                <a href="/portal" className="flex items-center gap-2 bg-gradient-to-r from-primary to-orange-500 text-white hover:shadow-lg hover:shadow-primary/40 px-5 py-2 rounded-full text-sm font-bold tracking-wide transition-all duration-300 transform hover:scale-105 border border-primary/20">
+                                    Regístrate
+                                </a>
+                            </MagneticButton>
+                        </div>
+                    )}
 
-                    {/* Hamburger for mobile */}
+                    {/* Hamburger for mobile — always visible and distinctive */}
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
-                        className="md:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-sm"
                         aria-label="Menú"
                     >
-                        {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
                 </div>
+
             </div>
 
             {/* Mobile menu */}
@@ -69,6 +89,22 @@ export default function Navbar({ onJoin }: { onJoin: () => void }) {
                                     {link.label}
                                 </a>
                             ))}
+                            <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800">
+                                <a
+                                    href="/portal"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="block text-center py-3 mt-2 rounded-xl text-base font-bold text-white bg-gradient-to-r from-primary to-orange-500 shadow-md flex items-center justify-center gap-2"
+                                >
+                                    {(user || isAdmin) ? (
+                                        <>
+                                            <User className="w-5 h-5" />
+                                            Mi Portal
+                                        </>
+                                    ) : (
+                                        'Regístrate / Login'
+                                    )}
+                                </a>
+                            </div>
                         </div>
                     </motion.div>
                 )}

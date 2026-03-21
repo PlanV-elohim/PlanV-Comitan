@@ -14,7 +14,7 @@ export default function MapSection() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: true, amount: 0.1 }}
                     className="text-center mb-16"
                 >
                     <div className="inline-block px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
@@ -34,7 +34,7 @@ export default function MapSection() {
                             key={loc.name}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: true, amount: 0.1 }}
                             transition={{ delay: i * 0.15 }}
                             whileHover={{ y: -5, scale: 1.02 }}
                             className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 text-center hover:border-primary/50 transition-colors duration-300"

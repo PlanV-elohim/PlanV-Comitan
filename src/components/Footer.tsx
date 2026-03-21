@@ -1,4 +1,4 @@
-export default function Footer() {
+export default function Footer({ onJoinForm }: { onJoinForm?: () => void }) {
     return (
         <footer id="contacto" className="bg-dark text-white py-16 px-6">
             <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">

@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar as CalendarIcon, MapPin, Clock, ArrowRight, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { CampEvent } from '../types';
-import { EVENTS, monthNames, dayNames } from '../data/events';
+import { monthNames, dayNames } from '../data/events';
 
 interface CalendarModalProps {
     onClose: () => void;
-    onRegister: (camp: CampEvent) => void;
+    onRegister: (camp: any) => void;
 }
 
 export default function CalendarModal({ onClose, onRegister }: CalendarModalProps) {
     const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 1));
-    const [selectedEvent, setSelectedEvent] = useState<CampEvent | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -25,12 +25,36 @@ export default function CalendarModal({ onClose, onRegister }: CalendarModalProp
         setSelectedEvent(null);
     };
 
+    const [events, setEvents] = useState<any[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        import('../lib/api').then(({ supabaseApi }) => {
+            supabaseApi.camps.getAll().then(data => {
+                if (!isMounted) return;
+                setEvents(data.filter((c: any) => c.status !== 'history'));
+            });
+        });
+        return () => { isMounted = false; };
+    }, []);
+
     const getEventsForDay = (day: number) => {
         const dateToCheck = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-        return EVENTS.filter(e => {
-            const start = new Date(e.date.getFullYear(), e.date.getMonth(), e.date.getDate());
-            const end = new Date(e.endDate.getFullYear(), e.endDate.getMonth(), e.endDate.getDate());
-            return dateToCheck >= start && dateToCheck <= end;
+        return events.filter(e => {
+            try {
+                // If it has a date_string, we try to parse it
+                if (e.date_string) {
+                    const parsed = new Date(e.date_string);
+                    if (!isNaN(parsed.getTime())) {
+                        return parsed.getDate() === day && 
+                               parsed.getMonth() === currentDate.getMonth() && 
+                               parsed.getFullYear() === currentDate.getFullYear();
+                    }
+                }
+                return false;
+            } catch {
+                return false;
+            }
         });
     };
 
@@ -158,7 +182,7 @@ export default function CalendarModal({ onClose, onRegister }: CalendarModalProp
                                                     <div>
                                                         <p className="text-sm text-gray-500 font-medium">Fecha</p>
                                                         <p className="font-semibold text-dark text-sm">
-                                                            {selectedEvent.date.getDate()} al {selectedEvent.endDate.getDate()} de {monthNames[selectedEvent.date.getMonth()]}
+                                                            {selectedEvent.date && selectedEvent.endDate ? `${selectedEvent.date.getDate()} al ${selectedEvent.endDate.getDate()} de ${monthNames[selectedEvent.date.getMonth()]}` : selectedEvent.date_string}
                                                         </p>
                                                     </div>
                                                 </div>

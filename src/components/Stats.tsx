@@ -38,7 +38,7 @@ function AnimatedNumber({ target, suffix, inView }: { target: number; suffix: st
 
 export default function Stats() {
     const ref = useRef(null);
-    const inView = useInView(ref, { once: true, margin: "-100px" });
+    const inView = useInView(ref, { once: true, amount: 0.1, margin: "-100px" });
 
     const stats: StatItem[] = [
         { icon: <Heart className="w-7 h-7" />, target: 1000, suffix: '+', label: 'Vidas Transformadas' },
@@ -56,7 +56,7 @@ export default function Stats() {
                             key={stat.label}
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: true, amount: 0.1 }}
                             transition={{ delay: i * 0.1 }}
                             className="text-center"
                         >

@@ -1,12 +1,22 @@
 export interface CampEvent {
-    id: number;
-    date: Date;
-    endDate: Date;
+    id: number | string;
     title: string;
-    description: string;
     location: string;
-    time: string;
-    spots: number;
-    available: number;
-    image: string;
+    
+    // Legacy
+    date?: Date;
+    endDate?: Date;
+    description?: string;
+    time?: string;
+    spots?: number;
+    available?: number;
+    image?: string;
+
+    // Supabase
+    date_string?: string;
+    capacity?: number;
+    price?: number;
+    status?: string;
+    image_url?: string;
+    registered?: number;
 }

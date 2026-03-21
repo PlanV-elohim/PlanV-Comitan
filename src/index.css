@@ -14,10 +14,31 @@ body {
   color: var(--color-dark);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  
+  /* App-like behaviors */
+  overscroll-behavior-y: none; /* Previene el pull-to-refresh y rebote nativo */
+  -webkit-tap-highlight-color: transparent; /* Quita el cuadro azul al tocar botones */
+  user-select: none; /* Evita que se seleccione el texto por accidente como app nativa */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* Evita el menú de "guardar imagen" en tap sostenido */
+}
+
+/* iOS Safari Safe Area Padding Constants */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+
+input, textarea, [contenteditable] {
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 /* Dark mode body */
