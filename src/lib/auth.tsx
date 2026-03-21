@@ -6,7 +6,7 @@ interface AuthContextType {
     user: User | null;
     isAdmin: boolean;
     loading: boolean;
-    loginAdmin: (password: string) => boolean;
+    loginAdmin: (email: string, password: string) => Promise<boolean>;
     logoutAdmin: () => void;
 }
 
@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     isAdmin: false,
     loading: true,
-    loginAdmin: () => false,
+    loginAdmin: async () => false,
     logoutAdmin: () => {}
 });
 
@@ -24,35 +24,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check local storage for admin session
-        const adminSession = localStorage.getItem('adminAuth');
-        if (adminSession === 'true') {
-            setIsAdmin(true);
-        }
-
-        // Check Supabase session for regular users
+        // Check Supabase session on mount
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+            
+            // Verify admin status
+            const adminSession = localStorage.getItem('adminAuth');
+            if (adminSession === 'true' && currentUser?.email === import.meta.env.VITE_ADMIN_EMAIL) {
+                setIsAdmin(true);
+            } else if (!currentUser || currentUser?.email !== import.meta.env.VITE_ADMIN_EMAIL) {
+                setIsAdmin(false);
+                localStorage.removeItem('adminAuth');
+            }
+            
             setLoading(false);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
+            const currentUser = session?.user ?? null;
+            setUser(currentUser);
+            
+            if (currentUser?.email === import.meta.env.VITE_ADMIN_EMAIL && localStorage.getItem('adminAuth') === 'true') {
+                setIsAdmin(true);
+            }
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
-    const loginAdmin = (password: string) => {
-        if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
+    const loginAdmin = async (email: string, password: string) => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        
+        if (data.user?.email === import.meta.env.VITE_ADMIN_EMAIL) {
             localStorage.setItem('adminAuth', 'true');
             setIsAdmin(true);
             return true;
+        } else {
+            await supabase.auth.signOut();
+            throw new Error('El correo ingresado no tiene privilegios de administrador.');
         }
-        return false;
     };
 
-    const logoutAdmin = () => {
+    const logoutAdmin = async () => {
+        await supabase.auth.signOut();
         localStorage.removeItem('adminAuth');
         setIsAdmin(false);
     };

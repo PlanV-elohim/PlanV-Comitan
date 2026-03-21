@@ -184,14 +184,18 @@ export default function Portal() {
                             <UserIcon className="w-8 h-8" />
                         </div>
                         <h1 className="text-2xl font-bold dark:text-white">Portal de Usuarios</h1>
-                        <p className="text-gray-500 text-sm mt-1">{mode === 'login' ? 'Ingresa a tu cuenta' : 'Regístrate para gestionar todo'}</p>
+                        <p className="text-gray-500 text-sm mt-1">
+                            {mode === 'login' 
+                                ? 'Ingresa a tu cuenta con tu correo personal' 
+                                : 'Si ya reservaste, crea tu cuenta con el mismo correo personal de tu reserva.'}
+                        </p>
                     </div>
 
                     <form onSubmit={handleAuth} className="space-y-4">
                         <input
                             type="email"
                             required
-                            placeholder="Correo Electrónico"
+                            placeholder={mode === 'register' ? 'Tu Correo Personal (el de tu reserva)' : 'Correo Electrónico'}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
@@ -199,7 +203,7 @@ export default function Portal() {
                         <input
                             type="password"
                             required
-                            placeholder="Contraseña"
+                            placeholder={mode === 'register' ? 'Crea una Contraseña' : 'Contraseña'}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
