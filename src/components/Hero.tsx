@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { supabaseApi } from '../lib/api';
 
-const FALLBACK_BG = 'https://picsum.photos/seed/campvid/1920/1080';
+const FALLBACK_BG = '';
 
 export default function Hero() {
     const ref = useRef(null);
@@ -70,12 +70,23 @@ export default function Hero() {
                     <div className={`absolute inset-0 transition-opacity duration-500 ${imageHasTextDesktop ? 'bg-black/30' : 'bg-transparent'}`} />
                 </div>
                 
-                {/* Mobile Image (No zoom) */}
+                {/* Mobile Image with fade overlay */}
                 <div
                     style={{ backgroundImage: `url(${heroMobileBg})` }}
                     className="w-full h-[80%] absolute top-0 bg-contain bg-top bg-no-repeat block md:hidden mt-[100px]"
                 />
-                <div className={`absolute inset-0 transition-opacity duration-500 block md:hidden ${imageHasTextMobile ? 'bg-black/40' : 'bg-black/60'}`} />
+                {/* Mobile fade overlays */}
+                <div className="absolute inset-0 block md:hidden pointer-events-none">
+                    {/* Dark tint */}
+                    <div className={`absolute inset-0 transition-opacity duration-500 ${imageHasTextMobile ? 'bg-black/40' : 'bg-black/50'}`} />
+                    {/* Bottom fade */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[45%] bg-gradient-to-t from-black via-black/70 to-transparent" />
+                    {/* Side fades */}
+                    <div className="absolute inset-y-0 left-0 w-[15%] bg-gradient-to-r from-black to-transparent" />
+                    <div className="absolute inset-y-0 right-0 w-[15%] bg-gradient-to-l from-black to-transparent" />
+                    {/* Top fade near navbar */}
+                    <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-b from-black/60 to-transparent" />
+                </div>
             </motion.div>
 
             {/* Overlay text — hidden when the image already has text (controlled by CSS) */}

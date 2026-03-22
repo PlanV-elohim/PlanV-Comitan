@@ -232,11 +232,6 @@ export default function Portal() {
                             {mode === 'login' ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión'}
                         </button>
                         
-                        {isAdmin && (
-                            <a href="/admin" className="block w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-                                <Settings className="w-4 h-4" /> Ir al Panel de Administración
-                            </a>
-                        )}
                     </div>
                     
                     <a href="/" className="block text-center mt-6 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">&larr; Volver a la página principal</a>
@@ -266,11 +261,6 @@ export default function Portal() {
                                 <p className="font-semibold text-gray-900 dark:text-white leading-tight">{userName}</p>
                                 <p className="text-gray-500 text-xs">Portal Personal</p>
                             </div>
-                            {isAdmin && (
-                                <a href="/admin" className="ml-2 px-3 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-xs font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors flex items-center gap-1.5">
-                                    <Settings className="w-3 h-3" /> Panel Admin
-                                </a>
-                            )}
                         </div>
                         <button onClick={handleLogout} className="p-2 sm:px-4 sm:py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-medium transition-colors flex items-center gap-2">
                             <LogOut className="w-5 h-5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Cerrar Sesión</span>

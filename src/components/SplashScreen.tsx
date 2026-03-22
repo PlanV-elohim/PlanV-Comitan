@@ -1,86 +1,113 @@
-import { useEffect } from 'react';
-import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+
+const CODE_LINES = [
+    { indent: 0, tokens: [{ text: 'const ', color: '#569CD6' }, { text: 'planV', color: '#9CDCFE' }, { text: ' = {', color: '#D4D4D4' }] },
+    { indent: 1, tokens: [{ text: 'ministerio', color: '#9CDCFE' }, { text: ': ', color: '#D4D4D4' }, { text: '"Heloim"', color: '#CE9178' }, { text: ',', color: '#D4D4D4' }] },
+    { indent: 1, tokens: [{ text: 'mision', color: '#9CDCFE' }, { text: ': ', color: '#D4D4D4' }, { text: '"Transformar vidas"', color: '#CE9178' }, { text: ',', color: '#D4D4D4' }] },
+    { indent: 1, tokens: [{ text: 'campamentos', color: '#9CDCFE' }, { text: ': [', color: '#D4D4D4' }] },
+    { indent: 2, tokens: [{ text: '"Plan B"', color: '#CE9178' }, { text: ', ', color: '#D4D4D4' }, { text: '"Elohim"', color: '#CE9178' }, { text: ', ', color: '#D4D4D4' }, { text: '"Comitán"', color: '#CE9178' }] },
+    { indent: 1, tokens: [{ text: ']', color: '#D4D4D4' }, { text: ',', color: '#D4D4D4' }] },
+    { indent: 1, tokens: [{ text: 'inscripcion', color: '#9CDCFE' }, { text: ': ', color: '#D4D4D4' }, { text: 'true', color: '#569CD6' }] },
+    { indent: 0, tokens: [{ text: '};', color: '#D4D4D4' }] },
+    { indent: 0, tokens: [] },
+    { indent: 0, tokens: [{ text: 'launch', color: '#DCDCAA' }, { text: '(planV); ', color: '#D4D4D4' }, { text: '// 🚀', color: '#6A9955' }] },
+];
 
 export default function SplashScreen({ onComplete }: { onComplete: () => void }) {
+    const [visibleLines, setVisibleLines] = useState(0);
+    const [done, setDone] = useState(false);
+
     useEffect(() => {
-        const timer = setTimeout(onComplete, 3000);
-        return () => clearTimeout(timer);
+        // Reveal lines one by one
+        const interval = setInterval(() => {
+            setVisibleLines(prev => {
+                if (prev >= CODE_LINES.length) {
+                    clearInterval(interval);
+                    // After last line visible, wait then fade out
+                    setTimeout(() => setDone(true), 500);
+                    setTimeout(onComplete, 1100);
+                    return prev;
+                }
+                return prev + 1;
+            });
+        }, 220);
+
+        return () => clearInterval(interval);
     }, [onComplete]);
 
     return (
         <motion.div
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050505] text-white overflow-hidden"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#1E1E1E] overflow-hidden"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 1, ease: [0.76, 0, 0.24, 1] } }}
+            exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] } }}
         >
-            {/* Background Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
-            </div>
+            {/* Ambient glow */}
+            <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-orange-500/5 blur-[150px] rounded-full pointer-events-none" />
 
+            {/* Editor Window */}
             <motion.div
-                initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                initial={{ scale: 0.92, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="text-center flex flex-col items-center"
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 border border-white/5"
             >
-                <div className="w-24 h-24 border-4 border-primary rounded-full flex items-center justify-center mb-8 relative">
-                    <motion.div
-                        className="absolute inset-0 border-4 border-primary rounded-full"
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <span className="text-4xl font-bold text-white tracking-tighter">PV</span>
+                {/* Title Bar */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-[#2D2D30] border-b border-white/5">
+                    <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+                        <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
+                        <div className="w-3 h-3 rounded-full bg-[#28CA41]" />
+                    </div>
+                    <span className="flex-1 text-center text-xs text-gray-400 font-mono tracking-widest">planV.ts — Ministerio Heloim</span>
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-2 flex items-center gap-3">
-                    <div className="flex">
-                        {"PLAN".split("").map((letter, i) => (
-                            <motion.span
-                                key={i}
-                                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                                transition={{ 
-                                    duration: 0.8, 
-                                    delay: i * 0.1,
-                                    ease: [0.22, 1, 0.36, 1]
-                                }}
-                            >
-                                {letter}
-                            </motion.span>
-                        ))}
-                    </div>
-                    <motion.span 
-                        initial={{ opacity: 0, scale: 2, rotate: -20, filter: "blur(20px)" }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0, filter: "blur(0px)" }}
-                        transition={{ duration: 1, delay: 0.6, ease: "backOut" }}
-                        className="text-primary relative"
-                    >
-                        V
-                        <motion.div 
-                            className="absolute inset-0 bg-primary blur-2xl opacity-50 -z-10"
-                            animate={{ opacity: [0.3, 0.6, 0.3] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-                    </motion.span>
-                </h1>
-                <motion.p 
-                    initial={{ opacity: 0, letterSpacing: "1em" }}
-                    animate={{ opacity: 1, letterSpacing: "0.2em" }}
-                    transition={{ duration: 1.5, delay: 1 }}
-                    className="text-xl md:text-2xl font-light uppercase text-gray-400 mb-12"
-                >
-                    Ministerio Heloim
-                </motion.p>
+                {/* Editor Body */}
+                <div className="bg-[#1E1E1E] p-5 font-mono text-sm min-h-[240px]">
+                    {/* Line numbers + code */}
+                    {CODE_LINES.slice(0, visibleLines).map((line, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="flex gap-4 leading-7"
+                        >
+                            <span className="select-none text-gray-600 text-right w-5 shrink-0">{i + 1}</span>
+                            <span>
+                                {' '.repeat(line.indent * 2)}
+                                {line.tokens.map((tok, j) => (
+                                    <span key={j} style={{ color: tok.color }}>{tok.text}</span>
+                                ))}
+                                {/* Blinking cursor on last visible line */}
+                                {i === visibleLines - 1 && !done && (
+                                    <motion.span
+                                        className="inline-block w-[2px] h-[14px] bg-white align-middle ml-0.5"
+                                        animate={{ opacity: [1, 0, 1] }}
+                                        transition={{ duration: 0.8, repeat: Infinity }}
+                                    />
+                                )}
+                            </span>
+                        </motion.div>
+                    ))}
+                </div>
 
-                <div className="w-64 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 2.5, ease: "easeInOut" }}
-                    />
+                {/* Status Bar */}
+                <div className="flex items-center justify-between px-4 py-1.5 bg-primary text-white text-xs font-mono">
+                    <span>● TypeScript</span>
+                    <AnimatePresence mode="wait">
+                        {!done ? (
+                            <motion.span key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                Iniciando campamento...
+                            </motion.span>
+                        ) : (
+                            <motion.span key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-green-200">
+                                ✓ Listo
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                    <span>UTF-8</span>
                 </div>
             </motion.div>
         </motion.div>

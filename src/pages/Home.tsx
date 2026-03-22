@@ -42,7 +42,11 @@ const ScrollSection = ({ children }: { children: React.ReactNode }) => (
 
 export default function Home() {
   const navigate = useNavigate();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show on first visit in this browser session
+    if (sessionStorage.getItem('splashShown')) return false;
+    return true;
+  });
   const [infoCamp, setInfoCamp] = useState<CampEvent | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
@@ -67,11 +71,14 @@ export default function Home() {
         <CustomCursor />
         <GlobalTouchEffect />
         <ThemeToggle />
-        <Navbar onJoin={() => setShowJoin(true)} />
+        <Navbar onJoin={() => setShowJoin(true)} modalOpen={!!(showCalendar || showJoin || infoCamp)} />
 
         <AnimatePresence mode="wait">
           {showSplash && (
-            <SplashScreen onComplete={() => setShowSplash(false)} />
+            <SplashScreen onComplete={() => {
+              sessionStorage.setItem('splashShown', '1');
+              setShowSplash(false);
+            }} />
           )}
         </AnimatePresence>
 
