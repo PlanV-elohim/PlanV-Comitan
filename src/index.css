@@ -16,7 +16,6 @@ body {
   -webkit-font-smoothing: antialiased;
   
   /* App-like behaviors */
-  overscroll-behavior-y: none; /* Previene el pull-to-refresh y rebote nativo */
   -webkit-tap-highlight-color: transparent; /* Quita el cuadro azul al tocar botones */
   user-select: none; /* Evita que se seleccione el texto por accidente como app nativa */
   -webkit-user-select: none;
@@ -38,7 +37,6 @@ input, textarea, [contenteditable] {
 
 html {
   scroll-behavior: smooth;
-  overscroll-behavior-y: none;
 }
 
 /* Dark mode body */
