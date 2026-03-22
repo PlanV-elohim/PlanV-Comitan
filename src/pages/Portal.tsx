@@ -6,28 +6,28 @@ import { motion, AnimatePresence } from 'motion/react';
 import CampInfoModal from '../components/CampInfoModal';
 import BoardingPassModal from '../components/BoardingPassModal';
 import ItineraryModal from '../components/ItineraryModal';
-import { 
-    Tent, 
-    Calendar as CalendarIcon, 
-    LogOut, 
-    User as UserIcon, 
-    Settings, 
-    CalendarDays, 
-    Phone, 
-    Save, 
-    Loader2, 
-    ArrowRight, 
-    Info, 
-    FileText, 
-    QrCode, 
-    Mail, 
-    Plus, 
+import {
+    Tent,
+    Calendar as CalendarIcon,
+    LogOut,
+    User as UserIcon,
+    Settings,
+    CalendarDays,
+    Phone,
+    Save,
+    Loader2,
+    ArrowRight,
+    Info,
+    FileText,
+    QrCode,
+    Mail,
+    Plus,
     Users,
-    Clock, 
-    Award, 
-    ShieldCheck, 
-    Zap, 
-    Star 
+    Clock,
+    Award,
+    ShieldCheck,
+    Zap,
+    Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseApi } from '../lib/api';
@@ -41,7 +41,7 @@ export default function Portal() {
     const [password, setPassword] = useState('');
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [statusAction, setStatusAction] = useState({ loading: false, error: '' });
-    
+
     // Portal States
     const [activeTab, setActiveTab] = useState<TabType>('reservations');
     const [registrations, setRegistrations] = useState<any[]>([]);
@@ -50,7 +50,7 @@ export default function Portal() {
     const [infoCamp, setInfoCamp] = useState<any>(null);
     const [itineraryCamp, setItineraryCamp] = useState<any>(null);
     const [boardingPassReg, setBoardingPassReg] = useState<any>(null);
-    
+
     // Profile Edit States
     const [profileName, setProfileName] = useState('');
     const [profilePhone, setProfilePhone] = useState('');
@@ -59,7 +59,7 @@ export default function Portal() {
 
     // Group Member States
     const [members, setMembers] = useState<any[]>([]);
-    const [newMemberName, setNewMemberName] = useState<Record<string, {first: string, last: string}>>({});
+    const [newMemberName, setNewMemberName] = useState<Record<string, { first: string, last: string }>>({});
     const [loadingMembers, setLoadingMembers] = useState<Record<string, boolean>>({});
 
     // Achievement States
@@ -97,7 +97,7 @@ export default function Portal() {
                 .select('*')
                 .eq('responsable_email', cleanEmail)
                 .order('created_at', { ascending: false });
-            
+
             if (regsData) {
                 setRegistrations(regsData);
                 const regIds = regsData.map(r => r.id);
@@ -134,14 +134,20 @@ export default function Portal() {
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatusAction({ loading: true, error: '' });
-        
+
         try {
             let authError = null;
             if (mode === 'register') {
-                const { error } = await supabase.auth.signUp({ email, password });
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/confirmado`
+                    }
+                });
                 authError = error;
                 if (!error) {
-                    setStatusAction({ loading: false, error: 'Revisa tu correo para confirmar el registro, o intenta iniciar sesión.' });
+                    setStatusAction({ loading: false, error: 'Hemos enviado un correo de confirmación a tu email, por favor, ve a tu correo para confirmar el registro.' });
                     return;
                 }
             } else {
@@ -164,7 +170,7 @@ export default function Portal() {
         e.preventDefault();
         setIsSavingProfile(true);
         setProfileUpdateMsg({ type: '', text: '' });
-        
+
         try {
             const { error } = await supabase.auth.updateUser({
                 data: { name: profileName, phone: profilePhone }
@@ -183,7 +189,7 @@ export default function Portal() {
         await supabase.auth.signOut();
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950"><Loader2 className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"/></div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950"><Loader2 className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
 
     if (!user) {
         return (
@@ -195,8 +201,8 @@ export default function Portal() {
                         </div>
                         <h1 className="text-2xl font-bold dark:text-white">Portal de Usuarios</h1>
                         <p className="text-gray-500 text-sm mt-1">
-                            {mode === 'login' 
-                                ? 'Ingresa a tu cuenta con tu correo personal' 
+                            {mode === 'login'
+                                ? 'Ingresa a tu cuenta con tu correo personal'
                                 : 'Si ya reservaste, crea tu cuenta con el mismo correo personal de tu reserva.'}
                         </p>
                     </div>
@@ -218,7 +224,7 @@ export default function Portal() {
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
                         />
-                        
+
                         {statusAction.error && (
                             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-sm text-center font-medium bg-red-50 dark:bg-red-500/10 p-3 rounded-xl border border-red-100 dark:border-red-900/50">
                                 {statusAction.error}
@@ -235,15 +241,15 @@ export default function Portal() {
                     </form>
 
                     <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 text-center space-y-4">
-                        <button 
+                        <button
                             onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
                             className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
                         >
                             {mode === 'login' ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión'}
                         </button>
-                        
+
                     </div>
-                    
+
                     <a href="/" className="block text-center mt-6 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">&larr; Volver a la página principal</a>
                 </motion.div>
             </div>
@@ -303,11 +309,11 @@ export default function Portal() {
                                     <h2 className="text-2xl sm:text-3xl font-bold dark:text-white tracking-tight">Mis Reservas Activas</h2>
                                     <p className="text-gray-500 mt-2">Gestiona y consulta los campamentos a los que estás inscrito.</p>
                                 </div>
-                                
+
                                 {isLoadingData ? (
                                     <div className="space-y-4">
                                         {[1, 2, 3].map(i => (
-                                            <div key={i} className={`h-32 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse ${i===2?'delay-75':(i===3?'delay-150':'')}`}></div>
+                                            <div key={i} className={`h-32 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse ${i === 2 ? 'delay-75' : (i === 3 ? 'delay-150' : '')}`}></div>
                                         ))}
                                     </div>
                                 ) : registrations.length === 0 ? (
@@ -328,145 +334,145 @@ export default function Portal() {
                                             return (
                                                 <div key={reg.id || index} className="flex flex-col gap-2">
                                                     <div className="group bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-primary/30 transition-all flex flex-col sm:flex-row justify-between gap-6 relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-                                                    
-                                                    <div className="flex-1 space-y-4 z-10">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold uppercase tracking-wider rounded-full">Confirmado</span>
-                                                                {reg.reg_type === 'group' && <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1"><UserIcon className="w-3 h-3"/> Grupal</span>}
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+
+                                                        <div className="flex-1 space-y-4 z-10">
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold uppercase tracking-wider rounded-full">Confirmado</span>
+                                                                    {reg.reg_type === 'group' && <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1"><UserIcon className="w-3 h-3" /> Grupal</span>}
+                                                                </div>
+                                                                <h3 className="text-2xl font-bold dark:text-white tracking-tight">{camp?.title || 'Campamento Exclusivo'}</h3>
                                                             </div>
-                                                            <h3 className="text-2xl font-bold dark:text-white tracking-tight">{camp?.title || 'Campamento Exclusivo'}</h3>
+                                                            <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                                                <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-gray-700">
+                                                                    <CalendarIcon className="w-4 h-4 text-primary" /> {camp?.date_string || 'Fechas pendientes'}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                                            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-gray-700">
-                                                                <CalendarIcon className="w-4 h-4 text-primary" /> {camp?.date_string || 'Fechas pendientes'}
+
+                                                        <div className="shrink-0 flex flex-col items-center justify-center sm:justify-end border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-6 sm:pt-0 sm:pl-8 z-10 gap-3">
+                                                            <div className="text-center w-full">
+                                                                <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Cupos Reservados</p>
+                                                                <div className="text-4xl font-black text-gray-900 dark:text-white leading-none">{reg.group_size || 1}</div>
                                                             </div>
+                                                            {reg.medical_cleared ? (
+                                                                <button
+                                                                    onClick={() => setBoardingPassReg({ type: 'main', reg, camp })}
+                                                                    className="w-full text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-600/20"
+                                                                >
+                                                                    <QrCode className="w-4 h-4" /> Pase Abordar
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => navigate(`/ficha-medica/${reg.id}`)}
+                                                                    className="w-full text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 animate-pulse"
+                                                                >
+                                                                    <FileText className="w-4 h-4" /> Llenar Ficha
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => setInfoCamp(camp)}
+                                                                className="w-full text-primary bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                <Info className="w-4 h-4" /> Detalles
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setItineraryCamp(camp)}
+                                                                className="w-full text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                <Clock className="w-4 h-4" /> Itinerario
+                                                            </button>
                                                         </div>
                                                     </div>
 
-                                                    <div className="shrink-0 flex flex-col items-center justify-center sm:justify-end border-t sm:border-t-0 sm:border-l border-gray-100 dark:border-gray-800 pt-6 sm:pt-0 sm:pl-8 z-10 gap-3">
-                                                        <div className="text-center w-full">
-                                                            <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">Cupos Reservados</p>
-                                                            <div className="text-4xl font-black text-gray-900 dark:text-white leading-none">{reg.group_size || 1}</div>
-                                                        </div>
-                                                        {reg.medical_cleared ? (
-                                                            <button 
-                                                                onClick={() => setBoardingPassReg({ type: 'main', reg, camp })}
-                                                                className="w-full text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-600/20"
-                                                            >
-                                                                <QrCode className="w-4 h-4" /> Pase Abordar
-                                                            </button>
-                                                        ) : (
-                                                            <button 
-                                                                onClick={() => navigate(`/ficha-medica/${reg.id}`)}
-                                                                className="w-full text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 animate-pulse"
-                                                            >
-                                                                <FileText className="w-4 h-4" /> Llenar Ficha
-                                                            </button>
-                                                        )}
-                                                        <button 
-                                                            onClick={() => setInfoCamp(camp)} 
-                                                            className="w-full text-primary bg-primary/10 hover:bg-primary/20 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Info className="w-4 h-4" /> Detalles
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => setItineraryCamp(camp)} 
-                                                            className="w-full text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Clock className="w-4 h-4" /> Itinerario
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                    {/* Group Members UI */}
+                                                    {reg.reg_type === 'group' && (
+                                                        <div className="border border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 sm:p-6 mt-4 shadow-inner">
+                                                            <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2"><Users className="w-4 h-4" /> Acompañantes ({members.filter(m => m.registration_id === reg.id).length} / {reg.group_size - 1})</h4>
+                                                            <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mb-4">
+                                                                Ingresa los nombres de tus acompañantes para que el administrador pueda asignarles Cabañas individualmente. Cada acompañante generará su propio Pase QR.
+                                                            </p>
 
-                                                {/* Group Members UI */}
-                                                {reg.reg_type === 'group' && (
-                                                    <div className="border border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 sm:p-6 mt-4 shadow-inner">
-                                                        <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2"><Users className="w-4 h-4"/> Acompañantes ({members.filter(m => m.registration_id === reg.id).length} / {reg.group_size - 1})</h4>
-                                                        <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mb-4">
-                                                            Ingresa los nombres de tus acompañantes para que el administrador pueda asignarles Cabañas individualmente. Cada acompañante generará su propio Pase QR.
-                                                        </p>
-                                                        
-                                                        <div className="space-y-3">
-                                                            {members.filter(m => m.registration_id === reg.id).map((member, idx) => (
-                                                                <div key={member.id} className="bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800/50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-                                                                    <div className="flex-1">
-                                                                        <p className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight">{idx+1}. {member.first_name} {member.last_name}</p>
-                                                                        <div className="flex flex-wrap gap-2 mt-1">
-                                                                            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Cabaña: <span className="text-primary">{member.cabin_id ? 'Asignada' : 'Pendiente'}</span></span>
-                                                                            <span className={`text-[10px] uppercase tracking-widest font-black ${member.medical_cleared ? 'text-green-600' : 'text-red-500'}`}>
-                                                                                Ficha: {member.medical_cleared ? 'COMPLETADA ✓' : 'FALTA ✗'}
-                                                                            </span>
+                                                            <div className="space-y-3">
+                                                                {members.filter(m => m.registration_id === reg.id).map((member, idx) => (
+                                                                    <div key={member.id} className="bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800/50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                                                                        <div className="flex-1">
+                                                                            <p className="font-bold text-sm text-gray-900 dark:text-white uppercase tracking-tight">{idx + 1}. {member.first_name} {member.last_name}</p>
+                                                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                                                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Cabaña: <span className="text-primary">{member.cabin_id ? 'Asignada' : 'Pendiente'}</span></span>
+                                                                                <span className={`text-[10px] uppercase tracking-widest font-black ${member.medical_cleared ? 'text-green-600' : 'text-red-500'}`}>
+                                                                                    Ficha: {member.medical_cleared ? 'COMPLETADA ✓' : 'FALTA ✗'}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            {member.medical_cleared ? (
+                                                                                <button
+                                                                                    onClick={() => setBoardingPassReg({ type: 'member', member, reg, camp })}
+                                                                                    className="flex items-center justify-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-black transition-all hover:scale-105 shadow-sm"
+                                                                                >
+                                                                                    <QrCode className="w-4 h-4" /> PASE QR
+                                                                                </button>
+                                                                            ) : (
+                                                                                <button
+                                                                                    onClick={() => navigate(`/ficha-medica/${reg.id}?member_id=${member.id}`)}
+                                                                                    className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black transition-all hover:scale-105 shadow-lg shadow-red-600/20 active:scale-95"
+                                                                                >
+                                                                                    <FileText className="w-4 h-4" /> LLENAR FICHA
+                                                                                </button>
+                                                                            )}
                                                                         </div>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        {member.medical_cleared ? (
-                                                                            <button 
-                                                                                onClick={() => setBoardingPassReg({ type: 'member', member, reg, camp })}
-                                                                                className="flex items-center justify-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-black transition-all hover:scale-105 shadow-sm"
-                                                                            >
-                                                                                <QrCode className="w-4 h-4" /> PASE QR
-                                                                            </button>
-                                                                        ) : (
-                                                                            <button 
-                                                                                onClick={() => navigate(`/ficha-medica/${reg.id}?member_id=${member.id}`)}
-                                                                                className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black transition-all hover:scale-105 shadow-lg shadow-red-600/20 active:scale-95"
-                                                                            >
-                                                                                <FileText className="w-4 h-4" /> LLENAR FICHA
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                            
-                                                            {members.filter(m => m.registration_id === reg.id).length < (reg.group_size - 1) && (
-                                                                <form 
-                                                                    onSubmit={async (e) => {
-                                                                        e.preventDefault();
-                                                                        const currentInput = newMemberName[reg.id];
-                                                                        if (!currentInput?.first || !currentInput?.last) return;
-                                                                        setLoadingMembers(p => ({...p, [reg.id]: true}));
-                                                                        try {
-                                                                            const data = await supabaseApi.groupMembers.create({
-                                                                                registration_id: reg.id,
-                                                                                first_name: currentInput.first,
-                                                                                last_name: currentInput.last
-                                                                            });
-                                                                            setMembers(prev => [...prev, data[0]]);
-                                                                            setNewMemberName(p => ({...p, [reg.id]: {first:'', last:''}}));
-                                                                        } catch (error) {
-                                                                            console.error("Error creating member", error);
-                                                                        } finally {
-                                                                            setLoadingMembers(p => ({...p, [reg.id]: false}));
-                                                                        }
-                                                                    }}
-                                                                    className="bg-white dark:bg-gray-900 border border-blue-100 dark:border-blue-800/50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-2 shadow-sm"
-                                                                >
-                                                                    <input 
-                                                                        required placeholder="Nombre(s)" 
-                                                                        value={newMemberName[reg.id]?.first || ''}
-                                                                        onChange={e => setNewMemberName(p => ({...p, [reg.id]: {...(p[reg.id]||{}), first: e.target.value}}))}
-                                                                        className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none dark:text-white"
-                                                                    />
-                                                                    <input 
-                                                                        required placeholder="Apellido(s)" 
-                                                                        value={newMemberName[reg.id]?.last || ''}
-                                                                        onChange={e => setNewMemberName(p => ({...p, [reg.id]: {...(p[reg.id]||{}), last: e.target.value}}))}
-                                                                        className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none dark:text-white"
-                                                                    />
-                                                                    <button disabled={loadingMembers[reg.id]} type="submit" className="sm:w-auto w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 mt-2 sm:mt-0">
-                                                                        {loadingMembers[reg.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4"/>} Agregar
-                                                                    </button>
-                                                                </form>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                                ))}
 
-                                            </div>
-                                        );
-                                    })}
+                                                                {members.filter(m => m.registration_id === reg.id).length < (reg.group_size - 1) && (
+                                                                    <form
+                                                                        onSubmit={async (e) => {
+                                                                            e.preventDefault();
+                                                                            const currentInput = newMemberName[reg.id];
+                                                                            if (!currentInput?.first || !currentInput?.last) return;
+                                                                            setLoadingMembers(p => ({ ...p, [reg.id]: true }));
+                                                                            try {
+                                                                                const data = await supabaseApi.groupMembers.create({
+                                                                                    registration_id: reg.id,
+                                                                                    first_name: currentInput.first,
+                                                                                    last_name: currentInput.last
+                                                                                });
+                                                                                setMembers(prev => [...prev, data[0]]);
+                                                                                setNewMemberName(p => ({ ...p, [reg.id]: { first: '', last: '' } }));
+                                                                            } catch (error) {
+                                                                                console.error("Error creating member", error);
+                                                                            } finally {
+                                                                                setLoadingMembers(p => ({ ...p, [reg.id]: false }));
+                                                                            }
+                                                                        }}
+                                                                        className="bg-white dark:bg-gray-900 border border-blue-100 dark:border-blue-800/50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-2 shadow-sm"
+                                                                    >
+                                                                        <input
+                                                                            required placeholder="Nombre(s)"
+                                                                            value={newMemberName[reg.id]?.first || ''}
+                                                                            onChange={e => setNewMemberName(p => ({ ...p, [reg.id]: { ...(p[reg.id] || {}), first: e.target.value } }))}
+                                                                            className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none dark:text-white"
+                                                                        />
+                                                                        <input
+                                                                            required placeholder="Apellido(s)"
+                                                                            value={newMemberName[reg.id]?.last || ''}
+                                                                            onChange={e => setNewMemberName(p => ({ ...p, [reg.id]: { ...(p[reg.id] || {}), last: e.target.value } }))}
+                                                                            className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none dark:text-white"
+                                                                        />
+                                                                        <button disabled={loadingMembers[reg.id]} type="submit" className="sm:w-auto w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 mt-2 sm:mt-0">
+                                                                            {loadingMembers[reg.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Agregar
+                                                                        </button>
+                                                                    </form>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </motion.div>
@@ -484,38 +490,38 @@ export default function Portal() {
                                     {futureCamps.map(camp => {
                                         const alreadyRegistered = registrations.some(r => r.camp_id === camp.id);
                                         return (
-                                        <div key={camp.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm flex flex-col group hover:shadow-xl hover:border-primary/50 transition-all">
-                                            <div className="h-48 overflow-hidden relative">
-                                                {alreadyRegistered && (
-                                                    <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                                                        ✓ Ya inscrito
-                                                    </div>
-                                                )}
-                                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
-                                                <img src={camp.image_url || 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7'} alt={camp.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
-                                            </div>
-                                            <div className="p-6 flex-1 flex flex-col">
-                                                <h3 className="text-xl font-bold dark:text-white mb-2">{camp.title}</h3>
-                                                <div className="flex gap-4 text-sm text-gray-500 mb-6 font-medium">
-                                                    <span className="flex items-center gap-1.5"><CalendarIcon className="w-4 h-4"/> {camp.date_string}</span>
-                                                    <span className="flex items-center gap-1.5"><UserIcon className="w-4 h-4"/> {camp.capacity} cupos</span>
-                                                </div>
-                                                {alreadyRegistered ? (
-                                                    <div className="mt-auto space-y-2">
-                                                        <div className="w-full text-center py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border-2 border-green-400 text-green-700 dark:text-green-400 font-bold flex items-center justify-center gap-2">
-                                                            ✓ Ya te suscribiste
+                                            <div key={camp.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-sm flex flex-col group hover:shadow-xl hover:border-primary/50 transition-all">
+                                                <div className="h-48 overflow-hidden relative">
+                                                    {alreadyRegistered && (
+                                                        <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                                                            ✓ Ya inscrito
                                                         </div>
-                                                        <button onClick={() => setActiveTab('reservations')} className="w-full text-center py-2.5 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">
-                                                            Ver mis reservas →
-                                                        </button>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
+                                                    <img src={camp.image_url || 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7'} alt={camp.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+                                                </div>
+                                                <div className="p-6 flex-1 flex flex-col">
+                                                    <h3 className="text-xl font-bold dark:text-white mb-2">{camp.title}</h3>
+                                                    <div className="flex gap-4 text-sm text-gray-500 mb-6 font-medium">
+                                                        <span className="flex items-center gap-1.5"><CalendarIcon className="w-4 h-4" /> {camp.date_string}</span>
+                                                        <span className="flex items-center gap-1.5"><UserIcon className="w-4 h-4" /> {camp.capacity} cupos</span>
                                                     </div>
-                                                ) : (
-                                                    <a href={`/#campamentos`} className="mt-auto w-full text-center py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-colors">
-                                                        Ver detalles e Inscribirse
-                                                    </a>
-                                                )}
+                                                    {alreadyRegistered ? (
+                                                        <div className="mt-auto space-y-2">
+                                                            <div className="w-full text-center py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border-2 border-green-400 text-green-700 dark:text-green-400 font-bold flex items-center justify-center gap-2">
+                                                                ✓ Ya te suscribiste
+                                                            </div>
+                                                            <button onClick={() => setActiveTab('reservations')} className="w-full text-center py-2.5 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium">
+                                                                Ver mis reservas →
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <a href={`/#campamentos`} className="mt-auto w-full text-center py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-colors">
+                                                            Ver detalles e Inscribirse
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
                                         );
                                     })}
                                     {futureCamps.length === 0 && (
@@ -551,10 +557,10 @@ export default function Portal() {
                                             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                                 <UserIcon className="w-4 h-4" /> Nombre Completo
                                             </label>
-                                            <input 
-                                                type="text" 
-                                                value={profileName} 
-                                                onChange={e => setProfileName(e.target.value)} 
+                                            <input
+                                                type="text"
+                                                value={profileName}
+                                                onChange={e => setProfileName(e.target.value)}
                                                 placeholder="Ej. Juan Pérez"
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all"
                                             />
@@ -564,10 +570,10 @@ export default function Portal() {
                                             <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                                                 <Phone className="w-4 h-4" /> Número de Teléfono
                                             </label>
-                                            <input 
-                                                type="tel" 
-                                                value={profilePhone} 
-                                                onChange={e => setProfilePhone(e.target.value)} 
+                                            <input
+                                                type="tel"
+                                                value={profilePhone}
+                                                onChange={e => setProfilePhone(e.target.value)}
                                                 placeholder="Ej. 123 456 7890"
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-all"
                                             />
@@ -595,9 +601,9 @@ export default function Portal() {
                                         {achievements.map((ach) => {
                                             const isExpediente = ach.badge_id === 'expediente_completo';
                                             const isVeterano = ach.badge_id === 'veterano';
-                                            
+
                                             return (
-                                                <motion.div 
+                                                <motion.div
                                                     key={ach.id}
                                                     initial={{ scale: 0.9, opacity: 0 }}
                                                     animate={{ scale: 1, opacity: 1 }}
@@ -647,17 +653,17 @@ export default function Portal() {
 
             <AnimatePresence>
                 {infoCamp && (
-                    <CampInfoModal camp={infoCamp} onClose={() => setInfoCamp(null)} onRegister={() => {}} hideRegisterButton={true} />
+                    <CampInfoModal camp={infoCamp} onClose={() => setInfoCamp(null)} onRegister={() => { }} hideRegisterButton={true} />
                 )}
                 {itineraryCamp && (
                     <ItineraryModal camp={itineraryCamp} onClose={() => setItineraryCamp(null)} />
                 )}
                 {boardingPassReg && (
-                    <BoardingPassModal 
-                        registration={boardingPassReg.type === 'member' ? boardingPassReg.member : boardingPassReg.reg} 
+                    <BoardingPassModal
+                        registration={boardingPassReg.type === 'member' ? boardingPassReg.member : boardingPassReg.reg}
                         camp={boardingPassReg.camp}
                         userName={boardingPassReg.type === 'member' ? `${boardingPassReg.member.first_name} ${boardingPassReg.member.last_name}` : `${boardingPassReg.reg.responsable_name} ${boardingPassReg.reg.responsable_lastname}`}
-                        onClose={() => setBoardingPassReg(null)} 
+                        onClose={() => setBoardingPassReg(null)}
                     />
                 )}
             </AnimatePresence>
