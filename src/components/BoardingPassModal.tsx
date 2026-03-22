@@ -44,29 +44,35 @@ export default function BoardingPassModal({ registration, camp, userName, onClos
                         <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Acampante</p>
                         <p className="text-xl font-bold dark:text-white truncate">{userName}</p>
                         
-                        {/* Status Chip */}
-                        {isCheckedIn && (
-                            <div className="mt-3 inline-flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                                <CheckCircle2 className="w-4 h-4" /> Chequeado en puerta
-                            </div>
-                        )}
+                        {/* No Status Chip needed if we are replacing the entire QR */}
                     </div>
 
-                    {/* QR Region */}
-                    <div className={`p-4 bg-white rounded-3xl transition-all ${isCheckedIn ? 'opacity-50 grayscale' : 'shadow-xl shadow-primary/10 border-2 border-gray-100'}`}>
-                        <QRCodeCanvas 
-                            value={registration.qr_code} 
-                            size={200}
-                            bgColor={"#ffffff"}
-                            fgColor={"#0f172a"}
-                            level={"H"}
-                            includeMargin={false}
-                        />
-                    </div>
-                    
-                    <p className="text-gray-400 text-xs text-center mt-6 font-mono tracking-widest">
-                        {registration.qr_code.split('-')[0].toUpperCase()}
-                    </p>
+                    {/* QR Region or Success Message */}
+                    {isCheckedIn ? (
+                        <div className="w-full flex flex-col items-center justify-center p-8 bg-green-50 dark:bg-green-900/20 rounded-3xl border-2 border-green-200 dark:border-green-800 border-dashed mb-4">
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5 }}>
+                                <CheckCircle2 className="w-20 h-20 text-green-500 mb-4 drop-shadow-md" />
+                            </motion.div>
+                            <h4 className="text-2xl font-black text-green-700 dark:text-green-400 tracking-tight text-center">¡Estás dentro!</h4>
+                            <p className="text-sm font-medium text-green-600/80 dark:text-green-400/80 text-center mt-2 leading-tight">Tu acceso ha sido validado exitosamente.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="p-4 bg-white rounded-3xl shadow-xl shadow-primary/10 border-2 border-gray-100 mb-2">
+                                <QRCodeCanvas 
+                                    value={registration.qr_code} 
+                                    size={200}
+                                    bgColor={"#ffffff"}
+                                    fgColor={"#0f172a"}
+                                    level={"H"}
+                                    includeMargin={false}
+                                />
+                            </div>
+                            <p className="text-gray-400 text-xs text-center mb-6 font-mono tracking-widest">
+                                {registration.qr_code.split('-')[0].toUpperCase()}
+                            </p>
+                        </>
+                    )}
 
                     <div className="w-full mt-6 space-y-3">
                         {registration.cabin_id && (
@@ -75,9 +81,11 @@ export default function BoardingPassModal({ registration, camp, userName, onClos
                                 <p className="text-primary font-bold">{registration.cabin_id}</p> {/* Will be populated with actual name later */}
                             </div>
                         )}
-                        <p className="text-center text-xs text-gray-400 max-w-[250px] mx-auto">
-                            Muestra este código al líder de staff en la entrada del campamento.
-                        </p>
+                        {!isCheckedIn && (
+                            <p className="text-center text-xs text-gray-400 max-w-[250px] mx-auto">
+                                Muestra este código al líder de staff en la entrada del campamento.
+                            </p>
+                        )}
                     </div>
                 </div>
             </motion.div>

@@ -187,112 +187,110 @@ export default function QRScanner() {
                         </div>
                     </motion.div>
                 ) : (
-                    /* RESULT VIEW (NATIVE SLIDE UP) */
+                    /* RESULT VIEW (EDGE TO EDGE FULL SCREEN NATIVE) */
                     <motion.div 
                         key="result-view"
                         initial={{ opacity: 0, y: '100%' }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="absolute inset-0 z-50 bg-gray-50 dark:bg-gray-950 flex flex-col"
+                        className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col"
                     >
-                        {/* Native App Header Area */}
-                        <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                            <button onClick={handleReset} className="flex items-center gap-1 text-primary hover:text-primary-dark transition-colors py-2 px-1 font-medium">
-                                <ChevronLeft className="w-6 h-6" /> Escáner
+                        {/* Native App Header Area overlaying the green top */}
+                        <div className="absolute top-0 left-0 right-0 p-4 z-50 pt-[env(safe-area-inset-top)] flex items-center justify-between">
+                            <button onClick={handleReset} className="flex items-center gap-1 bg-white/20 backdrop-blur-md text-white rounded-full py-2 px-3 font-medium border border-white/30 hover:bg-white/30 transition-colors shadow-sm">
+                                <ChevronLeft className="w-5 h-5 -ml-1" /> Volver
                             </button>
-                            <span className="font-bold tracking-tight text-gray-900 dark:text-white">Acceso a Evento</span>
                             <div className="w-20" /> {/* Balancer */}
                         </div>
 
-                        {/* Result Card taking full height comfortably */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32">
-                            <div className="bg-white dark:bg-gray-900 shadow-xl shadow-green-900/5 rounded-[2rem] overflow-hidden border border-green-100 dark:border-green-900/30">
-                                {/* Success Header */}
-                                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-center relative overflow-hidden text-white">
-                                    <motion.div 
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ type: 'spring', bounce: 0.5, delay: 0.2 }}
-                                        className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md shadow-inner relative z-10"
-                                    >
-                                        <CheckCircle2 className="w-10 h-10 text-white" />
-                                    </motion.div>
-                                    <h3 className="text-2xl font-black tracking-tight relative z-10">¡Acceso Autorizado!</h3>
-                                    <p className="text-green-50/90 font-medium mt-1 relative z-10">{scanResult.camp?.title}</p>
-                                    
-                                    {/* Deco curves */}
-                                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-black/10 rounded-full blur-2xl" />
+                        {/* Top Hero Section (Green) */}
+                        <div className="bg-gradient-to-b from-green-500 to-emerald-700 pt-24 pb-16 px-6 text-center relative overflow-hidden text-white flex flex-col items-center shadow-inner">
+                            <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', bounce: 0.5, delay: 0.2 }}
+                                className="w-24 h-24 bg-white/20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-lg border border-white/30 relative z-10"
+                            >
+                                <CheckCircle2 className="w-12 h-12 text-white" />
+                            </motion.div>
+                            <h3 className="text-3xl font-black tracking-tight relative z-10 drop-shadow-md">¡Acceso Autorizado!</h3>
+                            <p className="text-green-50 font-medium text-lg mt-2 relative z-10 opacity-90">{scanResult.camp?.title}</p>
+                            
+                            {/* Deco curves */}
+                            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute -top-20 -right-20 w-64 h-64 bg-black/10 rounded-full blur-3xl pointer-events-none" />
+                        </div>
+
+                        {/* Bottom Information Section (White Card overlapping the green header) */}
+                        <div className="flex-1 bg-white dark:bg-gray-900 rounded-t-[2.5rem] -mt-8 relative z-20 px-6 sm:px-8 pt-10 pb-24 overflow-y-auto shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                            <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto absolute top-4 left-1/2 -translate-x-1/2"></div>
+                            
+                            <div className="space-y-8 max-w-lg mx-auto">
+                                <div className="text-center">
+                                    <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Nombre del Acampante</p>
+                                    <p className="text-4xl font-black text-gray-900 dark:text-white leading-tight">
+                                        {scanResult.type === 'member' 
+                                            ? `${scanResult.member.first_name} ${scanResult.member.last_name}`
+                                            : (scanResult.registration.user_name || scanResult.registration.user_email)}
+                                    </p>
                                 </div>
 
-                                {/* Body Information */}
-                                <div className="p-6 sm:p-8 space-y-6">
-                                    <div className="text-center">
-                                        <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Nombre del Acampante</p>
-                                        <p className="text-3xl font-black text-gray-900 dark:text-white leading-tight">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-center justify-center text-center border border-gray-100 dark:border-gray-700/50 shadow-sm">
+                                        <p className="text-[11px] uppercase font-bold text-gray-400 mb-2">Cabaña Asignada</p>
+                                        <p className="font-black text-xl text-primary drop-shadow-sm">
                                             {scanResult.type === 'member' 
-                                                ? `${scanResult.member.first_name} ${scanResult.member.last_name}`
-                                                : (scanResult.registration.user_name || scanResult.registration.user_email)}
+                                                ? getCabinName(scanResult.member.cabin_id)
+                                                : getCabinName(scanResult.registration.cabin_id)}
                                         </p>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Cabaña Asignada</p>
-                                            <p className="font-bold text-lg dark:text-white">
-                                                {scanResult.type === 'member' 
-                                                    ? getCabinName(scanResult.member.cabin_id)
-                                                    : getCabinName(scanResult.registration.cabin_id)}
-                                            </p>
-                                        </div>
-                                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                                            <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Tipo de Pase</p>
-                                            <p className="font-bold text-lg dark:text-white capitalize">
-                                                {scanResult.type === 'member'
-                                                    ? `Miembro`
-                                                    : (scanResult.registration.reg_type === 'group' ? `Líder (${scanResult.registration.group_size})` : 'Individual')}
-                                            </p>
-                                        </div>
+                                    <div className="bg-gray-50 dark:bg-gray-800 p-5 rounded-3xl flex flex-col items-center justify-center text-center border border-gray-100 dark:border-gray-700/50 shadow-sm">
+                                        <p className="text-[11px] uppercase font-bold text-gray-400 mb-2">Tipo de Pase</p>
+                                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100 capitalize">
+                                            {scanResult.type === 'member'
+                                                ? `Miembro`
+                                                : (scanResult.registration.reg_type === 'group' ? `Líder (${scanResult.registration.group_size})` : 'Individual')}
+                                        </p>
                                     </div>
+                                </div>
 
-                                    {/* Medical Status Card */}
-                                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                                        <p className="text-xs uppercase font-bold text-gray-400 mb-3 text-center">Estado de Salud</p>
-                                        
-                                        {(scanResult.type === 'member' ? scanResult.member.medical_cleared : scanResult.registration.medical_cleared) ? (
-                                            <button 
-                                                onClick={async () => {
-                                                    setLoading(true);
-                                                    try {
-                                                        const data = scanResult.type === 'member' 
-                                                            ? await supabaseApi.medicalForms.getByMember(scanResult.member.id)
-                                                            : await supabaseApi.medicalForms.getByRegistration(scanResult.registration.id);
-                                                        setMedicalFullData(data || { empty: true });
-                                                    } finally { setLoading(false); }
-                                                }}
-                                                className="w-full flex items-center justify-center gap-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 p-4 rounded-2xl font-bold transition-colors border border-green-200 dark:border-green-800/50"
-                                            >
-                                                <HeartPulse className="w-6 h-6" /> Abrir Expediente Médico
-                                            </button>
-                                        ) : (
-                                            <div className="w-full flex flex-col items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-2xl font-bold border border-red-200 dark:border-red-800/50">
-                                                <div className="flex items-center gap-2">
-                                                    <AlertCircle className="w-5 h-5"/> 
-                                                    <span>Sin Ficha Médica (RIESGO)</span>
-                                                </div>
-                                                <p className="text-xs font-normal opacity-80 text-center">No se ha llenado el formulario de salud obligatorio para este acampante.</p>
+                                {/* Medical Status Card */}
+                                <div className="pt-2">
+                                    <p className="text-xs uppercase font-bold text-gray-400 mb-4 text-center tracking-widest">Expediente Médico</p>
+                                    
+                                    {(scanResult.type === 'member' ? scanResult.member.medical_cleared : scanResult.registration.medical_cleared) ? (
+                                        <button 
+                                            onClick={async () => {
+                                                setLoading(true);
+                                                try {
+                                                    const data = scanResult.type === 'member' 
+                                                        ? await supabaseApi.medicalForms.getByMember(scanResult.member.id)
+                                                        : await supabaseApi.medicalForms.getByRegistration(scanResult.registration.id);
+                                                    setMedicalFullData(data || { empty: true });
+                                                } finally { setLoading(false); }
+                                            }}
+                                            className="w-full flex items-center justify-center gap-3 bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 p-5 rounded-[2rem] font-bold transition-transform active:scale-95 border border-green-200 dark:border-green-800/30 shadow-sm"
+                                        >
+                                            <HeartPulse className="w-6 h-6" /> Ver Ficha de Salud
+                                        </button>
+                                    ) : (
+                                        <div className="w-full flex flex-col items-center justify-center gap-2 bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400 p-6 rounded-[2rem] font-bold border border-red-200 dark:border-red-800/30 shadow-sm">
+                                            <div className="flex items-center gap-2">
+                                                <AlertCircle className="w-6 h-6"/> 
+                                                <span className="text-lg">Sin Ficha Médica (RIESGO)</span>
                                             </div>
-                                        )}
-                                    </div>
+                                            <p className="text-sm font-normal opacity-80 text-center px-4 mt-1">Acampante no ha entregado formulario de salud obligatorio.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             
                             {/* Floating Action Button for Next Scan */}
-                            <div className="fixed bottom-24 lg:bottom-10 left-0 right-0 px-6 max-w-2xl mx-auto z-40">
+                            <div className="absolute bottom-6 left-0 right-0 px-6 max-w-2xl mx-auto z-40">
                                 <button 
                                     onClick={handleReset} 
-                                    className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-lg font-bold rounded-2xl shadow-xl shadow-gray-900/20 dark:shadow-white/10 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                                    className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-lg font-bold rounded-[1.5rem] shadow-2xl shadow-gray-900/20 dark:shadow-white/10 active:scale-95 transition-transform flex items-center justify-center gap-2"
                                 >
                                     <ScanBarcode className="w-6 h-6" /> Escanear Siguiente
                                 </button>
