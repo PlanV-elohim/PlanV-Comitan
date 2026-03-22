@@ -26,7 +26,10 @@ export default function AdminLogin() {
                 navigate('/admin');
             }
         } catch (err: any) {
-            setError(err.message || 'Credenciales inválidas');
+            let msg = err.message || 'Credenciales inválidas';
+            if (msg.includes('Invalid login credentials')) msg = 'Correo o contraseña incorrectos.';
+            else if (msg.includes('rate limit')) msg = 'Demasiados intentos. Por favor, espera un momento.';
+            setError(msg);
             setPassword('');
         } finally {
             setLoading(false);

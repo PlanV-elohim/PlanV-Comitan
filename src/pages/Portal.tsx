@@ -136,17 +136,27 @@ export default function Portal() {
         setStatusAction({ loading: true, error: '' });
         
         try {
+            let authError = null;
             if (mode === 'register') {
                 const { error } = await supabase.auth.signUp({ email, password });
-                if (error) throw error;
-                setStatusAction({ loading: false, error: 'Revisa tu correo para confirmar el registro (si es requerido) o intenta iniciar sesión.' });
-                // En modo desarrollo Supabase autologuea si no hay confirmación obligatoria.
+                authError = error;
+                if (!error) {
+                    setStatusAction({ loading: false, error: 'Revisa tu correo para confirmar el registro, o intenta iniciar sesión.' });
+                    return;
+                }
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                authError = error;
             }
+            if (authError) throw authError;
         } catch (err: any) {
-            setStatusAction({ loading: false, error: err.message || 'Error de autenticación' });
+            let msg = err.message || 'Error de autenticación';
+            if (msg.includes('User already registered')) msg = 'Este correo ya está registrado. Por favor, inicia sesión.';
+            else if (msg.includes('Password should be at least')) msg = 'La contraseña debe tener al menos 6 caracteres.';
+            else if (msg.includes('Invalid login credentials')) msg = 'Correo o contraseña incorrectos.';
+            else if (msg.includes('Email not confirmed')) msg = 'Debes confirmar tu correo electrónico antes de iniciar sesión.';
+            else if (msg.includes('rate limit')) msg = 'Demasiados intentos. Por favor, espera un momento.';
+            setStatusAction({ loading: false, error: msg });
         }
     };
 
