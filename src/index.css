@@ -9,6 +9,10 @@
 }
 
 /* Base styles */
+html, body {
+  touch-action: pan-x pan-y; /* Completely prevent pinch-to-zoom natively on Safari/Chrome */
+}
+
 body {
   background-color: #ffffff;
   color: var(--color-dark);
