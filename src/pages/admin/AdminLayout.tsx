@@ -121,21 +121,21 @@ export default function AdminLayout() {
             </main>
 
             {/* Mobile Bottom Navigation Bar styled like a Native App */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe z-40">
-                <div className="flex justify-around items-center p-2">
-                    <Link to="/admin" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname === '/admin' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+            <div className="lg:hidden fixed bottom-6 left-4 right-4 z-40">
+                <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl flex justify-around items-center p-2 rounded-[2rem] pb-[env(safe-area-inset-bottom)]">
+                    <Link to="/admin" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname === '/admin' ? 'text-primary bg-primary/10' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
                         <LayoutDashboard className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Inicio</span>
                     </Link>
-                    <Link to="/admin/reservaciones" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname.startsWith('/admin/reservaciones') ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <Link to="/admin/reservaciones" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname.startsWith('/admin/reservaciones') ? 'text-primary bg-primary/10' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
                         <Users className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Pases</span>
                     </Link>
-                    <Link to="/admin/scanner" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname.startsWith('/admin/scanner') ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <Link to="/admin/scanner" onClick={() => setSidebarOpen(false)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${location.pathname.startsWith('/admin/scanner') ? 'text-primary bg-primary/10' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
                         <ScanBarcode className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Escáner</span>
                     </Link>
-                    <button onClick={() => setSidebarOpen(true)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${sidebarOpen ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <button onClick={() => setSidebarOpen(true)} className={`flex flex-col items-center p-2 rounded-2xl w-full transition-colors ${sidebarOpen ? 'text-primary bg-primary/10' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
                         <Menu className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Más</span>
                     </button>
