@@ -14,6 +14,7 @@ import CabinsManager from './pages/admin/CabinsManager';
 import ItineraryManager from './pages/admin/ItineraryManager';
 import RegisterPage from './pages/RegisterPage';
 import MedicalFormPage from './pages/MedicalFormPage';
+import SuccessPage from './pages/SuccessPage';
 import { ToastProvider } from './components/ui/Toast';
 import { ConfirmDialogProvider } from './components/ui/ConfirmDialog';
 import { AuthProvider } from './lib/auth';
@@ -28,8 +29,8 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/portal" element={<Portal />} />
             <Route path="/ficha-medica/:id" element={<MedicalFormPage />} />
+            <Route path="/confirmado" element={<SuccessPage />} />
             <Route path="/registro/:id" element={<RegisterPage />} />
-            
             {/* Rutas de Administración */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminLayout />}>
