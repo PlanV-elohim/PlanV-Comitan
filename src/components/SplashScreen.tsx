@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import CampingScene from './CampingScene';
 
 const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
     id: i,
@@ -46,45 +47,28 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
                 />
             ))}
 
-            {/* Main logo */}
-            <div className="relative flex flex-col items-center">
-                <div className="flex items-end gap-3 mb-4">
-                    {['P', 'L', 'A', 'N'].map((letter, i) => (
-                        <motion.span
-                            key={letter}
-                            className="text-7xl md:text-9xl font-black text-white leading-none tracking-tighter"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
-                            initial={{ y: 80, opacity: 0, filter: 'blur(20px)' }}
-                            animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                            transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                            {letter}
-                        </motion.span>
-                    ))}
-
-                    {/* The V — pops with fire effect */}
-                    <motion.div
-                        className="relative"
-                        initial={{ scale: 0, rotate: -15, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        transition={{ delay: 0.45, duration: 0.6, type: 'spring', bounce: 0.5 }}
-                    >
-                        <span
-                            className="text-7xl md:text-9xl font-black leading-none tracking-tighter"
-                            style={{ color: '#EF4444', fontFamily: "'Inter', sans-serif", textShadow: '0 0 40px rgba(239,68,68,0.8), 0 0 80px rgba(239,68,68,0.4)' }}
-                        >
-                            V
-                        </span>
-                        {/* Fire glow pulse */}
-                        <motion.div
-                            className="absolute inset-0 flex items-center justify-center"
-                            animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
-                            transition={{ duration: 1.2, repeat: Infinity }}
-                        >
-                            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-red-500 blur-2xl" />
-                        </motion.div>
-                    </motion.div>
-                </div>
+            {/* Main Animation Logo */}
+            <div className="relative flex flex-col items-center mb-8">
+                <motion.div
+                    initial={{ scale: 0.8, opacity: 0, filter: 'blur(15px)' }}
+                    animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="scale-[0.8] md:scale-[1.1]"
+                >
+                    <CampingScene />
+                </motion.div>
+                
+                {/* Floating "PLAN V" title below animation */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="mt-4 font-black text-4xl tracking-widest text-white flex items-center gap-2"
+                >
+                    <span>PLAN</span>
+                    <span className="text-red-500" style={{ textShadow: '0 0 20px rgba(239,68,68,0.5)' }}>V</span>
+                </motion.div>
+            </div>
 
                 {/* Tagline */}
                 <AnimatePresence>
@@ -105,7 +89,6 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </div>
 
             {/* Bottom progress bar */}
             <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gray-900">
