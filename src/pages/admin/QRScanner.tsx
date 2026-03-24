@@ -23,6 +23,37 @@ export default function QRScanner() {
         return cabins.find(c => c.id === id)?.name || `Cabaña ${id}`;
     };
 
+    const playSound = (type: 'success' | 'error') => {
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if(!AudioContext) return;
+            const audioCtx = new AudioContext();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'success') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 Beep
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            } else {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); // Low Buzz
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+                oscillator.stop(audioCtx.currentTime + 0.5);
+                if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
+            }
+        } catch(e) { console.error('Audio play error:', e); }
+    };
+
     const handleScan = async (detectedCodes: any[]) => {
         if (!detectedCodes || detectedCodes.length === 0) return;
         const code = detectedCodes[0].rawValue;
@@ -47,6 +78,7 @@ export default function QRScanner() {
                 }
                 setScanResult({ type: 'main', registration: regData, camp: regData.camp });
                 setLoading(false);
+                playSound(regData.medical_cleared ? 'success' : 'error');
                 return;
             }
 
@@ -58,10 +90,12 @@ export default function QRScanner() {
                 }
                 setScanResult({ type: 'member', member: memberData, registration: memberData.registration, camp: memberData.registration.camp });
                 setLoading(false);
+                playSound(memberData.medical_cleared ? 'success' : 'error');
                 return;
             }
 
             setError("Código QR inválido o no encontrado.");
+            playSound('error');
         } catch (err: any) {
             console.error(err);
             setError("Error al consultar la base de datos.");

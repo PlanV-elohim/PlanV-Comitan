@@ -14,6 +14,7 @@ export default function RegistrationsManager() {
     const [selectedCampFilter, setSelectedCampFilter] = useState('all');
     const [selectedReg, setSelectedReg] = useState<any | null>(null);
     const [updatingReg, setUpdatingReg] = useState(false);
+    const [magicAssigning, setMagicAssigning] = useState(false);
     const [viewMode, setViewMode] = useState<'reservations' | 'individuals'>('reservations');
     const [medicalFormData, setMedicalFormData] = useState<any | null>(null);
     const [loadingMedical, setLoadingMedical] = useState(false);
@@ -121,6 +122,82 @@ export default function RegistrationsManager() {
         link.click();
     };
 
+    const runMagicAssignment = async () => {
+        if (selectedCampFilter === 'all') {
+            alert('Por favor selecciona un campamento específico en el filtro superior primero.');
+            return;
+        }
+        
+        const campId = Number(selectedCampFilter);
+        const campCabins = cabins.filter(c => c.camp_id === campId);
+        
+        if(campCabins.length === 0) {
+            alert('No hay cabañas creadas para este campamento. Ve a la sección de Cabañas primero.');
+            return;
+        }
+
+        const confirmed = window.confirm('🪄 Asignación Mágica:\nEl sistema agrupará a los equipos en las cabañas disponibles respetando la capacidad máxima. ¿Deseas auto-asignar a todos los que aún no tienen cabaña?');
+        if(!confirmed) return;
+
+        setMagicAssigning(true);
+        try {
+            const campRegs = registrations.filter(r => r.camp_id === campId);
+            const campRegIds = campRegs.map(r => r.id);
+            const campMembers = members.filter(m => campRegIds.includes(m.registration_id));
+
+            // Calculate current occupation
+            const occupation: Record<number, number> = {};
+            campCabins.forEach(c => occupation[c.id] = 0);
+            
+            campRegs.forEach(r => { if(r.cabin_id) occupation[r.cabin_id] = (occupation[r.cabin_id] || 0) + 1; });
+            campMembers.forEach(m => { if(m.cabin_id) occupation[m.cabin_id] = (occupation[m.cabin_id] || 0) + 1; });
+
+            const updatesReg: {id: string, cabin_id: number}[] = [];
+            const updatesMem: {id: string, cabin_id: number}[] = [];
+
+            // Grouping logic (keep groups together)
+            for (const r of campRegs) {
+                const groupHolders = !r.cabin_id ? [r] : [];
+                const groupMems = campMembers.filter(m => m.registration_id === r.id && !m.cabin_id);
+                const totalToAssign = groupHolders.length + groupMems.length;
+
+                if (totalToAssign === 0) continue;
+
+                // Find a cabin with space
+                let assignedCabin = campCabins.find(c => (c.capacity - (occupation[c.id] || 0)) >= totalToAssign);
+                
+                // Fallback: If no single cabin fits the whole group, assign to any cabin with space
+                if (!assignedCabin) {
+                    assignedCabin = campCabins.find(c => (c.capacity - (occupation[c.id] || 0)) > 0);
+                }
+
+                if (assignedCabin) {
+                    const cid = assignedCabin.id;
+                    if(groupHolders.length > 0) updatesReg.push({ id: r.id, cabin_id: cid });
+                    groupMems.forEach(m => updatesMem.push({ id: m.id, cabin_id: cid }));
+                    occupation[cid] += totalToAssign;
+                }
+            }
+
+            if(updatesReg.length === 0 && updatesMem.length === 0) {
+                 alert('Todos los usuarios ya tienen cabaña o no hay espacio suficiente.');
+                 return;
+            }
+
+            // Sync with Supabase (sequential to avoid locking)
+            for (const u of updatesReg) await supabaseApi.registrations.update(u.id, { cabin_id: u.cabin_id });
+            for (const u of updatesMem) await supabaseApi.groupMembers.update(u.id, { cabin_id: u.cabin_id });
+
+            alert(`✨ ¡Acomodo Exitoso!\nSe asignaron ${updatesReg.length + updatesMem.length} acampantes a cabañas.`);
+            await loadData();
+        } catch (e) {
+            console.error(e);
+            alert('Hubo un error al auto-asignar cabañas.');
+        } finally {
+            setMagicAssigning(false);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -128,9 +205,15 @@ export default function RegistrationsManager() {
                     <h1 className="text-3xl lg:text-4xl font-bold dark:text-white tracking-tight mb-2">Reservaciones</h1>
                     <p className="text-gray-500 dark:text-gray-400 text-lg">Consulta y gestiona todas las inscripciones recibidas.</p>
                 </div>
-                <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
-                    <Download className="w-4 h-4" /> Exportar CSV
-                </button>
+                <div className="flex items-center gap-3">
+                    <button disabled={magicAssigning} onClick={runMagicAssignment} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transform transition-all disabled:opacity-50 shrink-0">
+                        {magicAssigning ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>🪄</span>} 
+                        {magicAssigning ? 'Asignando...' : 'Asignación Mágica'}
+                    </button>
+                    <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
+                        <Download className="w-4 h-4" /> Exportar CSV
+                    </button>
+                </div>
             </header>
 
             {/* Stats bar */}
@@ -408,6 +491,35 @@ export default function RegistrationsManager() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Payment Status Management */}
+                                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-green-600 flex items-center gap-2">💰 Estado del Pago</p>
+                                    </div>
+                                    <select 
+                                        value={selectedReg.payment_status || 'pending'} 
+                                        onChange={async (e) => {
+                                            setUpdatingReg(true);
+                                            const newStatus = e.target.value;
+                                            try {
+                                                await supabaseApi.registrations.update(selectedReg.id, { payment_status: newStatus });
+                                                setSelectedReg((prev: any) => ({ ...prev, payment_status: newStatus }));
+                                                setRegistrations(registrations.map(r => r.id === selectedReg.id ? { ...r, payment_status: newStatus } : r));
+                                            } catch (error) {
+                                                console.error("Error updating payment", error);
+                                            } finally {
+                                                setUpdatingReg(false);
+                                            }
+                                        }}
+                                        disabled={updatingReg}
+                                        className={`w-full border rounded-xl px-4 py-3 outline-none transition-all font-bold disabled:opacity-50 ${selectedReg.payment_status === 'paid' ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-800 dark:text-green-100 dark:border-green-600' : selectedReg.payment_status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-300 dark:bg-red-800 dark:text-red-100 dark:border-red-600' : 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-800 dark:text-yellow-100 dark:border-yellow-600'}`}
+                                    >
+                                        <option value="pending">⚠️ Pendiente / Con Anticipo</option>
+                                        <option value="paid">✅ Liquidado (100% Pagado)</option>
+                                        <option value="cancelled">❌ Cancelado / No Pagó</option>
+                                    </select>
+                                </div>
 
                                 {/* Cabin Assignment */}
                                 <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4">

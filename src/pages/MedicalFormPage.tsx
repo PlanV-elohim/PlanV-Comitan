@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Save, AlertCircle, Loader2, CheckCircle2, ArrowLeft, HeartPulse, ShieldAlert, ArrowRight, User as UserIcon, Activity } from 'lucide-react';
+import { Save, AlertCircle, Loader2, CheckCircle2, ArrowLeft, HeartPulse, ShieldAlert, ArrowRight, User as UserIcon, Activity, Phone } from 'lucide-react';
 import { useParams, useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { supabaseApi } from '../lib/api';

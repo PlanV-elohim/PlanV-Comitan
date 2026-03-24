@@ -22,10 +22,19 @@ export default function DashboardOverview() {
                 // Calculate top metrics
                 const activeCamps = camps.filter((c: any) => c.status !== 'history').length;
                 const totalReservas = regs.reduce((sum: number, r: any) => sum + (r.group_size || 1), 0);
-                const ingresos = totalReservas * 250; // Mock $250 avg fee estimation
+                
+                let ingresosReales = 0;
+                regs.forEach((r: any) => {
+                    if (r.payment_status === 'paid') {
+                        const camp = camps.find((c: any) => c.id === r.camp_id);
+                        const price = camp?.price || 0;
+                        ingresosReales += (r.group_size || 1) * price;
+                    }
+                });
+
                 const unreadMessages = messages.filter((m: any) => !m.is_read).length;
 
-                setStats({ reservas: totalReservas, campsActivos: activeCamps, ingresos, mensajes: unreadMessages });
+                setStats({ reservas: totalReservas, campsActivos: activeCamps, ingresos: ingresosReales, mensajes: unreadMessages });
 
                 // Calculate Last 6 Months Chart Data
                 const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -113,7 +122,7 @@ export default function DashboardOverview() {
                 {[
                     { label: "Cupos Reservados", value: stats.reservas, trend: "Histórico total", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
                     { label: "Campamentos Activos", value: stats.campsActivos, trend: "En plataforma", icon: Tent, color: "text-primary", bg: "bg-primary/10" },
-                    { label: "Ingresos Estimados", value: `$${stats.ingresos.toLocaleString()}`, trend: "Cálculo base", icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10" },
+                    { label: "Ingresos (Pagados)", value: `$${stats.ingresos.toLocaleString()}`, trend: "Reservas liquidadas", icon: TrendingUp, color: "text-green-500", bg: "bg-green-500/10" },
                     { label: "Nuevos Mensajes", value: stats.mensajes, trend: stats.mensajes > 0 ? "Requieren atención" : "Bandeja limpia", icon: MessageSquare, color: "text-purple-500", bg: "bg-purple-500/10" }
                 ].map((stat, i) => (
                     <motion.div 
