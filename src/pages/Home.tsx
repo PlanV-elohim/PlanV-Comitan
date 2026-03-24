@@ -10,6 +10,7 @@ const Values = lazy(() => import('../components/Values'));
 const Gallery = lazy(() => import('../components/Gallery'));
 const Timeline = lazy(() => import('../components/Timeline'));
 const Testimonials = lazy(() => import('../components/Testimonials'));
+const Devotionals = lazy(() => import('../components/Devotionals'));
 const FAQ = lazy(() => import('../components/FAQ'));
 const AboutUs = lazy(() => import('../components/AboutUs'));
 const MapSection = lazy(() => import('../components/MapSection'));
@@ -26,6 +27,9 @@ import ScrollToTop from '../components/ScrollToTop';
 import ThemeToggle from '../components/ThemeToggle';
 import SplashScreen from '../components/SplashScreen';
 import BottomNavbar from '../components/BottomNavbar';
+import { ThemeProvider } from '../context/ThemeContext';
+import PWAInstallPrompt from '../components/PWAInstallPrompt';
+import { trackEvent } from '../lib/analytics';
 import { useNavigate } from 'react-router-dom';
 import { CampEvent } from '../types';
 
@@ -111,6 +115,10 @@ export default function Home() {
         <ScrollSection>
           <Suspense fallback={<SectionSkeleton />}><Testimonials /></Suspense>
         </ScrollSection>
+
+        <ScrollSection>
+          <Suspense fallback={<SectionSkeleton />}><Devotionals /></Suspense>
+        </ScrollSection>
         
         <ScrollSection>
           <Suspense fallback={<SingleColumnSkeleton height="h-[400px]" />}><FAQ /></Suspense>
@@ -128,6 +136,7 @@ export default function Home() {
         <WhatsAppButton phoneNumber="1234567890" message="¡Hola! Me gustaría obtener más información sobre los campamentos." />
         <BottomNavbar /> 
         <ScrollToTop />
+        <PWAInstallPrompt />
 
         <AnimatePresence>
           {showCalendar && (
@@ -162,17 +171,4 @@ export default function Home() {
       </div>
     </ThemeProvider>
   );
-}
-
-function ThemeProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const isDark = localStorage.getItem('theme') === 'dark' || 
-                   (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-  return <>{children}</>;
 }

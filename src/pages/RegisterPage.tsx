@@ -1,11 +1,12 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, ArrowLeft, Users, User, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowLeft, Users, User, ArrowRight, ChevronRight } from 'lucide-react';
 import { CampEvent } from '../types';
 import Confetti from '../components/Confetti';
 import { useToast } from '../components/ui/Toast';
 import { playSuccessSound } from '../lib/sound';
+import { trackEvent } from '../lib/analytics';
 
 export default function RegisterPage() {
     const location = useLocation();
@@ -194,17 +195,30 @@ export default function RegisterPage() {
                                 </div>
                             </div>
 
-                            {/* Progress indicators */}
-                            <div className="px-8 pt-6 pb-2">
-                                <div className="flex gap-2">
-                                    <div className={`h-1.5 flex-1 rounded-full ${step === 1 ? 'bg-primary' : step !== 1 ? 'bg-primary/40' : 'bg-gray-200 dark:bg-gray-800'}`} />
-                                    <div className={`h-1.5 flex-1 rounded-full ${step === 2 ? 'bg-primary' : (typeof step === 'number' && step > 2) || String(step) === 'pay' ? 'bg-primary/40' : 'bg-gray-200 dark:bg-gray-800'}`} />
-                                    {regType === 'group' && (
-                                        <div className={`h-1.5 flex-1 rounded-full ${(typeof step === 'number' && step >= 3) ? 'bg-primary' : String(step) === 'pay' ? 'bg-primary/40' : 'bg-gray-200 dark:bg-gray-800'}`} />
-                                    )}
-                                    <div className={`h-1.5 flex-1 rounded-full ${String(step) === 'pay' ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-800'}`} />
-                                </div>
-                            </div>
+                            {/* Animated Progress Bar */}
+                            {(() => {
+                                const totalSteps = regType === 'group' ? 2 + (groupSize - 1) + 1 : 3;
+                                const currentNum = typeof step === 'string' ? totalSteps : step;
+                                const pct = Math.round((currentNum / totalSteps) * 100);
+                                const labels: Record<string, string> = { '1': 'Tipo de registro', '2': 'Tus datos', 'pay': 'Pago' };
+                                const label = typeof step === 'number' && step >= 3 ? `Acompañante ${step - 2}` : (labels[String(step)] ?? '');
+                                return (
+                                    <div className="px-8 pt-5 pb-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</span>
+                                            <span className="text-xs font-black text-primary tabular-nums">{pct}%</span>
+                                        </div>
+                                        <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                            <motion.div
+                                                className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.5, ease: 'easeOut' }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </>
                     )}
 

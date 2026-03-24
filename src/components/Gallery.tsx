@@ -1,135 +1,190 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { supabaseApi } from '../lib/api';
 
+const EVENT_FILTERS = ['Todos', 'Campamento 2024', 'Retiro 2025', 'Fogata', 'Generales'];
+
 const PLACEHOLDERS = [
-    { src: "https://picsum.photos/seed/gallery1/800/600", caption: "" },
-    { src: "https://picsum.photos/seed/gallery2/800/600", caption: "" },
-    { src: "https://picsum.photos/seed/gallery3/800/600", caption: "" },
-    { src: "https://picsum.photos/seed/gallery4/800/600", caption: "" },
-    { src: "https://picsum.photos/seed/gallery5/800/600", caption: "" },
-    { src: "https://picsum.photos/seed/gallery6/800/600", caption: "" },
+    { src: "https://picsum.photos/seed/g1/800/600", caption: "Momento de adoración", event: "Campamento 2024" },
+    { src: "https://picsum.photos/seed/g2/400/600", caption: "Comunidad", event: "Retiro 2025" },
+    { src: "https://picsum.photos/seed/g3/800/400", caption: "Fogata nocturna", event: "Fogata" },
+    { src: "https://picsum.photos/seed/g4/600/800", caption: "Grupo de jóvenes", event: "Campamento 2024" },
+    { src: "https://picsum.photos/seed/g5/800/600", caption: "Orando juntos", event: "Retiro 2025" },
+    { src: "https://picsum.photos/seed/g6/600/400", caption: "Actividades al aire libre", event: "Generales" },
+    { src: "https://picsum.photos/seed/g7/400/400", caption: "Alabanza", event: "Fogata" },
+    { src: "https://picsum.photos/seed/g8/800/600", caption: "Atardecer en el campamento", event: "Generales" },
+    { src: "https://picsum.photos/seed/g9/600/600", caption: "Equipo de líderes", event: "Campamento 2024" },
 ];
+
+type GalleryImage = { src: string; caption: string; event?: string };
 
 export default function Gallery() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
-    const [images, setImages] = useState(PLACEHOLDERS);
+    const [images, setImages] = useState<GalleryImage[]>(PLACEHOLDERS);
+    const [activeFilter, setActiveFilter] = useState('Todos');
+    const [zoom, setZoom] = useState(false);
 
     useEffect(() => {
         supabaseApi.gallery.getAll('gallery')
             .then((data: any[]) => {
                 if (data.length > 0) {
-                    setImages(data.map((img: any) => ({ src: img.image_url, caption: '' })));
+                    setImages(data.map((img: any) => ({ src: img.image_url, caption: img.caption || '', event: img.event || 'Generales' })));
                 }
             })
-            .catch(() => {}); // keep placeholders on error
+            .catch(() => {});
     }, []);
 
-    const navigate = (dir: number) => {
+    const filteredImages = activeFilter === 'Todos'
+        ? images
+        : images.filter(img => img.event === activeFilter);
+
+    const navigateLightbox = (dir: number) => {
         if (selectedImage === null) return;
-        const next = (selectedImage + dir + images.length) % images.length;
+        setZoom(false);
+        const next = (selectedImage + dir + filteredImages.length) % filteredImages.length;
         setSelectedImage(next);
     };
 
+    // Keyboard navigation
+    useEffect(() => {
+        if (selectedImage === null) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') navigateLightbox(-1);
+            if (e.key === 'ArrowRight') navigateLightbox(1);
+            if (e.key === 'Escape') { setSelectedImage(null); setZoom(false); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [selectedImage, filteredImages.length]);
+
     return (
-        <section className="py-24 bg-gray-50 px-6">
+        <section className="py-24 bg-gray-50 dark:bg-gray-950 px-6">
             <div className="max-w-7xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.1 }}
-                    className="text-center mb-16"
+                    className="text-center mb-12"
                 >
-                    <div className="inline-block px-4 py-2 bg-red-50 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
+                    <div className="inline-block px-4 py-2 bg-red-50 dark:bg-red-900/30 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
                         Galería
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-gray-900 dark:text-white">
                         Momentos <span className="text-primary">Inolvidables</span>
                     </h2>
-                    <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                        Revive los mejores momentos de nuestros campamentos anteriores.
+                    <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+                        Revive los mejores momentos de nuestros campamentos.
                     </p>
+
+                    {/* Filter chips */}
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {EVENT_FILTERS.map(filter => (
+                            <motion.button
+                                key={filter}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setActiveFilter(filter)}
+                                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                                    activeFilter === filter
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-500/30'
+                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700'
+                                }`}
+                            >
+                                {filter}
+                            </motion.button>
+                        ))}
+                    </div>
                 </motion.div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {images.map((img: { src: string; caption: string }, i: number) => (
-                        <motion.button
-                            key={i}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true, amount: 0.1 }}
-                            transition={{ delay: i * 0.08 }}
-                            whileHover={{ scale: 1.03 }}
-                            onClick={() => setSelectedImage(i)}
-                            className={`relative overflow-hidden rounded-2xl group cursor-pointer ${i === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                                }`}
-                        >
-                            <div className={`${i === 0 ? 'aspect-square' : 'aspect-video'}`}>
+                {/* Masonry Grid via CSS columns */}
+                <motion.div
+                    layout
+                    className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3"
+                >
+                    <AnimatePresence>
+                        {filteredImages.map((img, i) => (
+                            <motion.button
+                                key={img.src + activeFilter}
+                                layout
+                                initial={{ opacity: 0, scale: 0.85 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.85 }}
+                                transition={{ duration: 0.3, delay: i * 0.04 }}
+                                whileHover={{ scale: 1.02 }}
+                                onClick={() => setSelectedImage(i)}
+                                className="relative overflow-hidden rounded-2xl group cursor-pointer break-inside-avoid w-full block"
+                            >
                                 <img
                                     src={img.src}
                                     alt={img.caption}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                    referrerPolicy="no-referrer"
+                                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700"
                                     loading="lazy"
+                                    referrerPolicy="no-referrer"
                                 />
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="absolute bottom-4 left-4 right-4 text-white">
-                                    <p className="font-medium text-sm">{img.caption}</p>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                                    <p className="text-white text-xs font-medium truncate">{img.caption}</p>
+                                    <ZoomIn className="absolute top-3 right-3 w-5 h-5 text-white/80" />
                                 </div>
-                            </div>
-                        </motion.button>
-                    ))}
-                </div>
+                            </motion.button>
+                        ))}
+                    </AnimatePresence>
+                </motion.div>
+
+                {filteredImages.length === 0 && (
+                    <p className="text-center text-gray-400 py-16">No hay fotos en esta categoría aún.</p>
+                )}
             </div>
 
-            {/* Lightbox */}
+            {/* Enhanced Lightbox */}
             <AnimatePresence>
                 {selectedImage !== null && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-                        onClick={() => setSelectedImage(null)}
+                        className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+                        onClick={() => { setSelectedImage(null); setZoom(false); }}
                     >
-                        <button
-                            onClick={() => setSelectedImage(null)}
-                            className="absolute top-6 right-6 text-white/70 hover:text-white p-2 z-10"
-                        >
-                            <X className="w-8 h-8" />
-                        </button>
-                        <button
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(-1); }}
-                            className="absolute left-4 text-white/70 hover:text-white p-2 z-10"
-                        >
-                            <ChevronLeft className="w-10 h-10" />
-                        </button>
-                        <button
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(1); }}
-                            className="absolute right-4 text-white/70 hover:text-white p-2 z-10"
-                        >
-                            <ChevronRight className="w-10 h-10" />
+                        {/* Close */}
+                        <button onClick={() => { setSelectedImage(null); setZoom(false); }} className="absolute top-5 right-5 text-white/60 hover:text-white p-2 z-10 transition-colors">
+                            <X className="w-7 h-7" />
                         </button>
 
+                        {/* Counter */}
+                        <div className="absolute top-5 left-5 text-white/60 text-sm font-mono z-10">
+                            {selectedImage + 1} / {filteredImages.length}
+                        </div>
+
+                        {/* Nav */}
+                        <button onClick={(e) => { e.stopPropagation(); navigateLightbox(-1); }} className="absolute left-3 md:left-6 text-white/60 hover:text-white p-3 z-10 bg-white/10 hover:bg-white/20 rounded-full transition-all">
+                            <ChevronLeft className="w-7 h-7" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); navigateLightbox(1); }} className="absolute right-3 md:right-6 text-white/60 hover:text-white p-3 z-10 bg-white/10 hover:bg-white/20 rounded-full transition-all">
+                            <ChevronRight className="w-7 h-7" />
+                        </button>
+
+                        {/* Image */}
                         <motion.div
                             key={selectedImage}
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.92 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="max-w-5xl w-full"
-                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                            exit={{ opacity: 0, scale: 0.92 }}
+                            transition={{ duration: 0.25 }}
+                            className="max-w-4xl w-full mx-12 md:mx-24"
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <img
-                                src={images[selectedImage].src}
-                                alt={images[selectedImage].caption}
-                                className="w-full rounded-2xl"
+                                src={filteredImages[selectedImage].src}
+                                alt={filteredImages[selectedImage].caption}
+                                className={`w-full rounded-2xl transition-transform duration-300 cursor-zoom-in ${zoom ? 'scale-150' : ''}`}
+                                onClick={() => setZoom(z => !z)}
                                 referrerPolicy="no-referrer"
                             />
-                            <p className="text-white text-center mt-4 font-medium">
-                                {images[selectedImage].caption}
-                            </p>
+                            {filteredImages[selectedImage].caption && (
+                                <p className="text-white/80 text-center mt-4 font-medium text-sm">
+                                    {filteredImages[selectedImage].caption}
+                                </p>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}

@@ -33,7 +33,7 @@ export default function FAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <section className="py-24 bg-white px-6">
+        <section className="py-24 bg-white dark:bg-gray-950 px-6">
             <div className="max-w-3xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -41,13 +41,13 @@ export default function FAQ() {
                     viewport={{ once: true, amount: 0.1 }}
                     className="text-center mb-16"
                 >
-                    <div className="inline-block px-4 py-2 bg-red-50 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
+                    <div className="inline-block px-4 py-2 bg-red-50 dark:bg-red-900/30 text-primary rounded-full text-sm font-bold tracking-wider uppercase mb-6">
                         FAQ
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+                    <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-gray-900 dark:text-white">
                         Preguntas <span className="text-primary">Frecuentes</span>
                     </h2>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">
                         Resolvemos tus dudas sobre nuestros campamentos.
                     </p>
                 </motion.div>
@@ -60,13 +60,13 @@ export default function FAQ() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.1 }}
                             transition={{ delay: i * 0.05 }}
-                            className="border border-gray-100 rounded-2xl overflow-hidden"
+                            className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900"
                         >
                             <button
                                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                             >
-                                <span className="font-semibold text-dark pr-4">{faq.question}</span>
+                                <span className="font-semibold text-gray-900 dark:text-white pr-4">{faq.question}</span>
                                 <motion.div
                                     animate={{ rotate: openIndex === i ? 180 : 0 }}
                                     transition={{ duration: 0.3 }}
@@ -84,7 +84,7 @@ export default function FAQ() {
                                         transition={{ duration: 0.3 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="px-6 pb-6 text-gray-600 leading-relaxed">
+                                        <div className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed">
                                             {faq.answer}
                                         </div>
                                     </motion.div>
