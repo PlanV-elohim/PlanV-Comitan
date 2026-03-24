@@ -27,12 +27,19 @@ import {
     Award,
     ShieldCheck,
     Zap,
+    CheckCircle,
+    BellRing,
+    Home,
+    MessageCircle,
+    Copy,
+    AlertCircle,
+    CheckCircle2,
     Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseApi } from '../lib/api';
 
-type TabType = 'profile' | 'reservations' | 'camps';
+type TabType = 'home' | 'profile' | 'reservations' | 'camps';
 
 export default function Portal() {
     const { user, loading, isAdmin } = useAuth();
@@ -43,7 +50,7 @@ export default function Portal() {
     const [statusAction, setStatusAction] = useState({ loading: false, error: '' });
 
     // Portal States
-    const [activeTab, setActiveTab] = useState<TabType>('reservations');
+    const [activeTab, setActiveTab] = useState<TabType>('home');
     const [registrations, setRegistrations] = useState<any[]>([]);
     const [camps, setCamps] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -288,6 +295,9 @@ export default function Portal() {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row gap-8">
                 {/* Desktop Side Navigation */}
                 <aside className="hidden md:flex flex-col w-64 shrink-0 space-y-2 sticky top-[104px] self-start">
+                    <button onClick={() => setActiveTab('home')} className={`flex items-center gap-3 px-5 py-4 rounded-2xl font-medium transition-all ${activeTab === 'home' ? 'bg-white dark:bg-gray-900 text-primary shadow-sm border border-gray-100 dark:border-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 hover:text-gray-900 dark:hover:text-white'}`}>
+                        <Home className="w-5 h-5" /> Inicio
+                    </button>
                     <button onClick={() => setActiveTab('reservations')} className={`flex items-center gap-3 px-5 py-4 rounded-2xl font-medium transition-all ${activeTab === 'reservations' ? 'bg-white dark:bg-gray-900 text-primary shadow-sm border border-gray-100 dark:border-gray-800' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 hover:text-gray-900 dark:hover:text-white'}`}>
                         <Tent className="w-5 h-5" /> Mis Reservas
                     </button>
@@ -302,6 +312,162 @@ export default function Portal() {
                 {/* Main Content Area */}
                 <main className="flex-1 min-w-0">
                     <AnimatePresence mode="wait">
+                        {/* -------------------- HOME TAB -------------------- */}
+                        {activeTab === 'home' && (
+                            <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+                                <div className="bg-gradient-to-br from-primary to-orange-500 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden hidden sm:block">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                                    <div className="relative z-10">
+                                        <h2 className="text-3xl font-bold mb-2">¡Hola, {userInitials}! 👋</h2>
+                                        <p className="text-white/80 text-lg max-w-lg">Bienvenido a tu centro de control de Plan V. Prepárate para tu próxima gran expedición.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="sm:hidden mb-6">
+                                    <h2 className="text-3xl font-bold dark:text-white tracking-tight">Inicio</h2>
+                                    <p className="text-gray-500 mt-2">¡Hola, {userInitials}! Bienvenido a tu portal.</p>
+                                </div>
+
+                                {/* Active Camp Quick Access */}
+                                {isLoadingData ? (
+                                    <div className="h-40 bg-gray-200 dark:bg-gray-800 rounded-3xl animate-pulse"></div>
+                                ) : registrations.length > 0 ? (
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {/* Next Camp Widget */}
+                                        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                                    <CalendarIcon className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900 dark:text-white">Próxima Expedición</p>
+                                                    <p className="text-xs text-gray-500">Campamento Activo</p>
+                                                </div>
+                                            </div>
+                                            {(() => {
+                                                const activeReg = registrations[0];
+                                                const camp = camps.find(c => c.id === activeReg.camp_id);
+                                                return (
+                                                    <div>
+                                                        <h4 className="text-xl font-black text-gray-900 dark:text-white mb-2">{camp?.title || 'Campamento'}</h4>
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
+                                                            <CalendarDays className="w-4 h-4 text-primary" /> {camp?.date_string || 'Fechas pendientes'}
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => setActiveTab('reservations')}
+                                                            className="w-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-semibold py-3 rounded-xl transition-colors border border-gray-200 dark:border-gray-700"
+                                                        >
+                                                            Gestionar mi Reserva
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Status Widget */}
+                                        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                                        <AlertCircle className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 dark:text-white">Estado del Registro</p>
+                                                    </div>
+                                                </div>
+                                                {(() => {
+                                                    const activeReg = registrations[0];
+                                                    const camp = camps.find(c => c.id === activeReg.camp_id);
+                                                    if(activeReg.medical_cleared) {
+                                                        return (
+                                                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-2xl border border-green-100 dark:border-green-900/50 mb-4">
+                                                                <p className="text-green-800 dark:text-green-300 font-bold flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Expediente Listo</p>
+                                                                <p className="text-sm text-green-600/80 dark:text-green-400 mt-1">Tu pase de abordar ya está disponible.</p>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/50 mb-4">
+                                                            <p className="text-red-800 dark:text-red-300 font-bold flex items-center gap-2"><BellRing className="w-5 h-5" /> Atención Requerida</p>
+                                                            <p className="text-sm text-red-600/80 dark:text-red-400 mt-1">Falta completar tu Ficha Médica para que se emita tu Pase de Abordar.</p>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                            {(() => {
+                                                const activeReg = registrations[0];
+                                                const camp = camps.find(c => c.id === activeReg.camp_id);
+                                                if(activeReg.medical_cleared) {
+                                                    return (
+                                                        <button 
+                                                            onClick={() => setBoardingPassReg({ type: 'main', reg: activeReg, camp })}
+                                                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-green-600/20 flex justify-center items-center gap-2"
+                                                        >
+                                                            <QrCode className="w-5 h-5" /> Ver Pase Abordar
+                                                        </button>
+                                                    );
+                                                }
+                                                return (
+                                                    <button 
+                                                        onClick={() => navigate(`/ficha-medica/${activeReg.id}`)}
+                                                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-red-600/20 flex justify-center items-center gap-2"
+                                                    >
+                                                        <FileText className="w-5 h-5" /> Llenar Ficha Médica
+                                                    </button>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-200 dark:border-gray-800 flex items-center justify-between shadow-sm">
+                                        <div>
+                                            <h3 className="text-lg font-bold dark:text-white">Aún no tienes reservaciones</h3>
+                                            <p className="text-gray-500 text-sm mt-1">Explora nuestros campamentos y aventúrate.</p>
+                                        </div>
+                                        <button onClick={() => setActiveTab('camps')} className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:bg-primary-dark transition-colors">
+                                            Explorar
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Achievements Section on Dashboard */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xl font-bold dark:text-white flex items-center gap-2">
+                                            <Award className="w-6 h-6 text-yellow-500" /> Insignias Obtenidas
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        {achievements.map((ach) => {
+                                            const isExpediente = ach.badge_id === 'expediente_completo';
+                                            const isVeterano = ach.badge_id === 'veterano';
+
+                                            return (
+                                                <motion.div key={ach.id} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-inner ${isExpediente ? 'bg-gradient-to-br from-green-100 to-emerald-200 text-green-700' : (isVeterano ? 'bg-gradient-to-br from-purple-100 to-indigo-200 text-indigo-700' : 'bg-gradient-to-br from-red-100 to-orange-200 text-primary')}`}>
+                                                        {isExpediente ? <ShieldCheck className="w-7 h-7" /> : (isVeterano ? <Star className="w-7 h-7" /> : <Zap className="w-7 h-7" />)}
+                                                    </div>
+                                                    <p className="text-sm font-black uppercase tracking-tighter dark:text-white leading-tight">
+                                                        {isExpediente ? 'Expediente OK' : (isVeterano ? 'Veterano' : ach.badge_id)}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(ach.earned_at).toLocaleDateString()}</p>
+                                                </motion.div>
+                                            );
+                                        })}
+                                        {achievements.length === 0 && (
+                                            <div className="col-span-full py-10 text-center bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
+                                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <Award className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                                                </div>
+                                                <p className="text-gray-500 font-medium">Aún no has desbloqueado insignias.</p>
+                                                <p className="text-xs text-gray-400 mt-1">¡Interactúa más con el portal para ganar logros!</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {/* -------------------- RESERVATIONS TAB -------------------- */}
                         {activeTab === 'reservations' && (
                             <motion.div key="res" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
@@ -389,11 +555,34 @@ export default function Portal() {
                                                     {/* Group Members UI */}
                                                     {reg.reg_type === 'group' && (
                                                         <div className="border border-blue-100 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-4 sm:p-6 mt-4 shadow-inner">
-                                                            <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2"><Users className="w-4 h-4" /> Acompañantes ({members.filter(m => m.registration_id === reg.id).length} / {reg.group_size - 1})</h4>
-                                                            <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mb-4">
-                                                                Ingresa los nombres de tus acompañantes para que el administrador pueda asignarles Cabañas individualmente. Cada acompañante generará su propio Pase QR.
-                                                            </p>
-
+                                                            {(() => {
+                                                                const regMembers = members.filter(m => m.registration_id === reg.id);
+                                                                const totalMembers = reg.group_size - 1;
+                                                                const completedMembers = regMembers.filter(m => m.medical_cleared).length;
+                                                                const progressPct = totalMembers > 0 ? Math.round((completedMembers / totalMembers) * 100) : 0;
+                                                                return (
+                                                                    <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                                        <div>
+                                                                            <h4 className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2"><Users className="w-5 h-5 text-blue-500" /> Gestionar Acompañantes</h4>
+                                                                            <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-1 max-w-sm">
+                                                                                Registra a tus acompañantes para poder enviarles su Ficha de Salud individual y generar sus accesos.
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                                                                            <div className="text-right">
+                                                                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">Expedientes</p>
+                                                                                <p className="text-lg font-black text-blue-900 dark:text-blue-300 leading-none">{completedMembers} / {totalMembers}</p>
+                                                                            </div>
+                                                                            <div className="relative w-10 h-10 flex items-center justify-center">
+                                                                                <svg className="w-10 h-10 transform -rotate-90">
+                                                                                    <circle cx="20" cy="20" r="16" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-blue-200 dark:text-blue-900/50" />
+                                                                                    <circle cx="20" cy="20" r="16" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray={`${progressPct} 100`} className="text-blue-600 drop-shadow-sm" />
+                                                                                </svg>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                             <div className="space-y-3">
                                                                 {members.filter(m => m.registration_id === reg.id).map((member, idx) => (
                                                                     <div key={member.id} className="bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800/50 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
@@ -406,23 +595,36 @@ export default function Portal() {
                                                                                 </span>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            {member.medical_cleared ? (
-                                                                                <button
-                                                                                    onClick={() => setBoardingPassReg({ type: 'member', member, reg, camp })}
-                                                                                    className="flex items-center justify-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-black transition-all hover:scale-105 shadow-sm"
-                                                                                >
-                                                                                    <QrCode className="w-4 h-4" /> PASE QR
-                                                                                </button>
-                                                                            ) : (
-                                                                                <button
-                                                                                    onClick={() => navigate(`/ficha-medica/${reg.id}?member_id=${member.id}`)}
-                                                                                    className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black transition-all hover:scale-105 shadow-lg shadow-red-600/20 active:scale-95"
-                                                                                >
-                                                                                    <FileText className="w-4 h-4" /> LLENAR FICHA
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
+                                                                            <div className="flex items-center gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+                                                                                {member.medical_cleared ? (
+                                                                                    <button
+                                                                                        onClick={() => setBoardingPassReg({ type: 'member', member, reg, camp })}
+                                                                                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl text-xs font-black transition-all hover:scale-105 shadow-sm"
+                                                                                    >
+                                                                                        <QrCode className="w-4 h-4" /> PASE QR
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <button
+                                                                                            onClick={() => {
+                                                                                                const url = `${window.location.origin}/ficha-medica/${reg.id}?member_id=${member.id}`;
+                                                                                                navigator.clipboard.writeText(url);
+                                                                                                alert('¡Link copiado al portapapeles! Envíalo a tu acompañante.');
+                                                                                            }}
+                                                                                            title="Copiar link para enviar"
+                                                                                            className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-gray-200 dark:border-gray-600"
+                                                                                        >
+                                                                                            <Copy className="w-4 h-4" />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => navigate(`/ficha-medica/${reg.id}?member_id=${member.id}`)}
+                                                                                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-black transition-all hover:scale-105 shadow-lg shadow-red-600/20 active:scale-95"
+                                                                                        >
+                                                                                            <FileText className="w-4 h-4" /> LLENAR FICHA
+                                                                                        </button>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
                                                                     </div>
                                                                 ))}
 
@@ -591,42 +793,6 @@ export default function Portal() {
                                         </button>
                                     </div>
                                 </form>
-
-                                {/* Achievements Section */}
-                                <div className="max-w-2xl mt-12 space-y-6">
-                                    <h3 className="text-xl font-bold dark:text-white flex items-center gap-2">
-                                        <Award className="w-6 h-6 text-yellow-500" /> Mis Logros e Insignias
-                                    </h3>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                        {achievements.map((ach) => {
-                                            const isExpediente = ach.badge_id === 'expediente_completo';
-                                            const isVeterano = ach.badge_id === 'veterano';
-
-                                            return (
-                                                <motion.div
-                                                    key={ach.id}
-                                                    initial={{ scale: 0.9, opacity: 0 }}
-                                                    animate={{ scale: 1, opacity: 1 }}
-                                                    className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm"
-                                                >
-                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isExpediente ? 'bg-green-100 text-green-600' : (isVeterano ? 'bg-purple-100 text-purple-600' : 'bg-primary/10 text-primary')}`}>
-                                                        {isExpediente ? <ShieldCheck className="w-6 h-6" /> : (isVeterano ? <Star className="w-6 h-6" /> : <Zap className="w-6 h-6" />)}
-                                                    </div>
-                                                    <p className="text-xs font-black uppercase tracking-tighter dark:text-white">
-                                                        {isExpediente ? 'Expediente OK' : (isVeterano ? 'Veterano' : ach.badge_id)}
-                                                    </p>
-                                                    <p className="text-[10px] text-gray-400 mt-1">Conseguido el {new Date(ach.earned_at).toLocaleDateString()}</p>
-                                                </motion.div>
-                                            );
-                                        })}
-                                        {achievements.length === 0 && (
-                                            <div className="col-span-full py-8 text-center bg-gray-100 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
-                                                <p className="text-gray-400 text-sm font-medium">Aún no has desbloqueado insignias.</p>
-                                                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">¡Completa tu ficha médica para empezar!</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -636,20 +802,34 @@ export default function Portal() {
             {/* Mobile Bottom Navigation Bar */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 pb-safe z-40">
                 <div className="flex justify-around items-center p-2">
-                    <button onClick={() => setActiveTab('reservations')} className={`flex flex-col items-center p-3 rounded-2xl w-full transition-colors ${activeTab === 'reservations' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center p-2 sm:p-3 rounded-2xl w-full transition-colors ${activeTab === 'home' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                        <Home className="w-6 h-6 mb-1" />
+                        <span className="text-[10px] font-bold uppercase tracking-wide">Inicio</span>
+                    </button>
+                    <button onClick={() => setActiveTab('reservations')} className={`flex flex-col items-center p-2 sm:p-3 rounded-2xl w-full transition-colors ${activeTab === 'reservations' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                         <Tent className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Reservas</span>
                     </button>
-                    <button onClick={() => setActiveTab('camps')} className={`flex flex-col items-center p-3 rounded-2xl w-full transition-colors ${activeTab === 'camps' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTab('camps')} className={`flex flex-col items-center p-2 sm:p-3 rounded-2xl w-full transition-colors ${activeTab === 'camps' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                         <CalendarDays className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Explorar</span>
                     </button>
-                    <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-3 rounded-2xl w-full transition-colors ${activeTab === 'profile' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-2 sm:p-3 rounded-2xl w-full transition-colors ${activeTab === 'profile' ? 'text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                         <Settings className="w-6 h-6 mb-1" />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Perfil</span>
                     </button>
                 </div>
             </div>
+
+            {/* Support FAB */}
+            <a 
+                href="https://wa.me/1234567890?text=Hola,%20necesito%20ayuda%20con%20mi%20reserva%20en%20el%20Portal%20Plan%20V" 
+                target="_blank" 
+                rel="noreferrer"
+                className="fixed bottom-24 md:bottom-8 right-4 md:right-8 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 transition-transform hover:scale-110 z-30"
+            >
+                <MessageCircle className="w-7 h-7" />
+            </a>
 
             <AnimatePresence>
                 {infoCamp && (
