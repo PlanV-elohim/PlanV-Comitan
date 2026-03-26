@@ -25,15 +25,26 @@ export default function RegisterPage() {
 
     // Form states
     const [responsible, setResponsible] = useState({
-        name: '', lastName: '', age: '', phone: '', email: '', isFromChurch: '', churchName: ''
+        name: '', lastName: '', age: '', phone: '', email: '', gender: '', isFromChurch: '', churchName: ''
     });
-    const [companions, setCompanions] = useState<Array<{ name: string, lastName: string, age: string, phone: string }>>([]);
+    const [companions, setCompanions] = useState<Array<{ name: string, lastName: string, age: string, phone: string, gender: string }>>([]);
 
     // Card States
     const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
     const [cardFlipped, setCardFlipped] = useState(false);
     const [payInputFocused, setPayInputFocused] = useState(false);
     const [payProcessing, setPayProcessing] = useState(false);
+    const [currentOccupancy, setCurrentOccupancy] = useState<number>(0);
+
+    useEffect(() => {
+        if (camp?.id) {
+            import('../lib/api').then(({ supabaseApi }) => {
+                supabaseApi.registrations.getOccupancy(camp.id)
+                    .then(setCurrentOccupancy)
+                    .catch(console.error);
+            });
+        }
+    }, [camp?.id]);
 
     // Redirect if no camp
     if (!camp) {
@@ -46,7 +57,7 @@ export default function RegisterPage() {
             setCompanions(prev => {
                 const newCompanions = [...prev];
                 while (newCompanions.length < groupSize - 1) {
-                    newCompanions.push({ name: '', lastName: '', age: '', phone: '' });
+                    newCompanions.push({ name: '', lastName: '', age: '', phone: '', gender: '' });
                 }
                 while (newCompanions.length > groupSize - 1) {
                     newCompanions.pop();
@@ -128,8 +139,17 @@ export default function RegisterPage() {
                 return;
             }
 
+            const currentSpaces = await supabaseApi.registrations.getOccupancy(camp.id);
+            const maxCapacity = camp.capacity ?? 30; // Fallback to 30 as requested
+            if (currentSpaces + groupSize > maxCapacity) {
+                showToast(`Lo sentimos, solo quedan ${Math.max(0, maxCapacity - currentSpaces)} cupos disponibles.`, 'error');
+                setIsSubmitting(false);
+                setPayProcessing(false);
+                return;
+            }
+
             const cleanEmail = responsible.email.trim().toLowerCase();
-            await supabaseApi.registrations.create({
+            const regResponse = await supabaseApi.registrations.create({
                 camp_id: camp.id,
                 reg_type: regType,
                 group_size: groupSize,
@@ -138,9 +158,27 @@ export default function RegisterPage() {
                 responsable_age: parseInt(responsible.age) || 0,
                 responsable_phone: responsible.phone,
                 responsable_email: cleanEmail,
+                gender: responsible.gender,
                 is_from_church: responsible.isFromChurch === 'yes',
                 church_name: responsible.churchName || null
             });
+
+            const newRegId = regResponse[0]?.id;
+
+            if (regType === 'group' && companions.length > 0 && newRegId) {
+                for (const c of companions) {
+                    if (c.name.trim() !== '') {
+                        await supabaseApi.groupMembers.create({
+                            registration_id: newRegId,
+                            first_name: c.name,
+                            last_name: c.lastName,
+                            age: parseInt(c.age) || 0,
+                            phone: c.phone || '',
+                            gender: c.gender || null
+                        });
+                    }
+                }
+            }
 
             setPayProcessing(false);
             setStep('success');
@@ -314,10 +352,13 @@ export default function RegisterPage() {
                                             <motion.button 
                                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
                                                 type="submit" 
-                                                className="w-full bg-primary text-white py-4 rounded-xl flex items-center justify-center gap-2 font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 mt-auto"
+                                                disabled={currentOccupancy + (regType === 'group' ? parseInt(String(groupSize)) || 2 : 1) > (camp.capacity ?? 30)}
+                                                className="w-full bg-primary text-white py-4 rounded-xl flex items-center justify-center gap-2 font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 mt-auto disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                Siguiente
-                                                <ArrowRight className="w-5 h-5" />
+                                                {currentOccupancy + (regType === 'group' ? parseInt(String(groupSize)) || 2 : 1) > (camp.capacity ?? 30) 
+                                                    ? `Solo quedan ${Math.max(0, (camp.capacity ?? 30) - currentOccupancy)} cupos`
+                                                    : 'Siguiente'}
+                                                {currentOccupancy + (regType === 'group' ? parseInt(String(groupSize)) || 2 : 1) <= (camp.capacity ?? 30) && <ArrowRight className="w-5 h-5" />}
                                             </motion.button>
                                         )}
                                     </AnimatePresence>
@@ -355,9 +396,19 @@ export default function RegisterPage() {
                                             <input required type="tel" value={responsible.phone} onChange={e => setResponsible({...responsible, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-white focus:bg-white dark:focus:bg-gray-800 outline-none" placeholder="+52 000 0000" />
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5 flex flex-col">
-                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Correo</label>
-                                        <input required type="email" value={responsible.email} onChange={e => setResponsible({...responsible, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-white focus:bg-white dark:focus:bg-gray-800 outline-none" placeholder="juan@ejemplo.com" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5 flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Correo</label>
+                                            <input required type="email" value={responsible.email} onChange={e => setResponsible({...responsible, email: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-white focus:bg-white dark:focus:bg-gray-800 outline-none" placeholder="juan@ejemplo.com" />
+                                        </div>
+                                        <div className="space-y-1.5 flex flex-col">
+                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Sexo</label>
+                                            <select required value={responsible.gender} onChange={e => setResponsible({...responsible, gender: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 dark:text-white focus:bg-white dark:focus:bg-gray-800 outline-none">
+                                                <option value="" disabled hidden>Selecciona</option>
+                                                <option value="male">Hombre</option>
+                                                <option value="female">Mujer</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div className="space-y-3 pt-2">
                                         <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">¿Perteneces a alguna iglesia?</label>
@@ -414,9 +465,17 @@ export default function RegisterPage() {
                                             <input required type="number" min="1" max="100" value={companions[step - 3]?.age || ''} onChange={e => updateCompanion(step - 3, 'age', e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
                                         </div>
                                         <div className="space-y-1.5 flex flex-col">
-                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Teléfono</label>
-                                            <input required type="tel" value={companions[step - 3]?.phone || ''} onChange={e => updateCompanion(step - 3, 'phone', e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Sexo</label>
+                                            <select required value={companions[step - 3]?.gender || ''} onChange={e => updateCompanion(step - 3, 'gender', e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+                                                <option value="" disabled hidden>Selecciona</option>
+                                                <option value="male">Hombre</option>
+                                                <option value="female">Mujer</option>
+                                            </select>
                                         </div>
+                                    </div>
+                                    <div className="space-y-1.5 flex flex-col">
+                                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Teléfono (Opcional)</label>
+                                        <input type="tel" value={companions[step - 3]?.phone || ''} onChange={e => updateCompanion(step - 3, 'phone', e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
                                     </div>
                                     <button type="submit" disabled={isSubmitting} className="w-full bg-primary text-white py-4 rounded-xl flex items-center justify-center gap-2 font-medium hover:bg-primary-dark transition-colors mt-8">
                                         {step - 3 === groupSize - 2 ? 'Proceder al Pago' : 'Siguiente Acompañante'}

@@ -8,7 +8,7 @@ create extension if not exists "uuid-ossp";
  * ============================================== */
 
 -- Campamentos (Administran Cupos y Fechas)
-create table public.camps (
+create table if not exists public.camps (
   id uuid default uuid_generate_v4() primary key,
   title text not null,
   location text not null,
@@ -21,7 +21,7 @@ create table public.camps (
 );
 
 -- Reservaciones (El responsable de la reserva individual o grupal)
-create table public.registrations (
+create table if not exists public.registrations (
   id uuid default uuid_generate_v4() primary key,
   camp_id uuid references public.camps(id) not null,
   reg_type text not null, -- 'individual' o 'group'
@@ -40,22 +40,24 @@ create table public.registrations (
   
   -- Estado
   payment_status text default 'pending' not null, -- 'pending', 'paid', 'cancelled'
+  gender text, -- 'male' or 'female'
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Acompañantes (Dependientes de una reservación grupal)
-create table public.companions (
+create table if not exists public.group_members (
   id uuid default uuid_generate_v4() primary key,
   registration_id uuid references public.registrations(id) on delete cascade not null,
-  name text not null,
-  lastname text not null,
+  first_name text not null,
+  last_name text not null,
   age int not null,
   phone text,
+  gender text, -- 'male' or 'female'
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- Timeline (Eventos históricos para la sección "Nuestra Historia")
-create table public.timeline_events (
+create table if not exists public.timeline_events (
   id uuid default uuid_generate_v4() primary key,
   year text not null,
   title text not null,
@@ -67,7 +69,7 @@ create table public.timeline_events (
 );
 
 -- Galería General (Fotos del Hero y galería pública)
-create table public.gallery_images (
+create table if not exists public.gallery_images (
   id uuid default uuid_generate_v4() primary key,
   type text not null, -- 'hero_bg' (la foto de entrada gigante) o 'gallery' (cuadritos)
   image_url text not null,
@@ -76,7 +78,7 @@ create table public.gallery_images (
 );
 
 -- Buzón de Contacto (Mensajes de la web pública)
-create table public.contact_messages (
+create table if not exists public.contact_messages (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
   email text not null,
@@ -94,35 +96,56 @@ create table public.contact_messages (
 -- Habilitar RLS en todas las tablas
 alter table public.camps enable row level security;
 alter table public.registrations enable row level security;
-alter table public.companions enable row level security;
+alter table public.group_members enable row level security;
 alter table public.timeline_events enable row level security;
 alter table public.gallery_images enable row level security;
 alter table public.contact_messages enable row level security;
 
 -- PERMISOS PÚBLICOS (Cualquiera en tu página web puede hacer esto:)
 -- 1. Ver campamentos activos o próximos
+drop policy if exists "Public_Read_Camps" on public.camps;
 create policy "Public_Read_Camps" on public.camps for select to public using (status != 'history');
+
 -- 2. Ver la historia (timeline)
+drop policy if exists "Public_Read_Timeline" on public.timeline_events;
 create policy "Public_Read_Timeline" on public.timeline_events for select to public using (true);
+
 -- 3. Ver fotos de la galería activas
+drop policy if exists "Public_Read_Gallery" on public.gallery_images;
 create policy "Public_Read_Gallery" on public.gallery_images for select to public using (is_active = true);
--- 4. INSERTAR una nueva reservación (Nadie publico puede LEER la de otros, solo insertar)
+
+-- 4. INSERTAR una nueva reservación
+drop policy if exists "Public_Insert_Registrations" on public.registrations;
 create policy "Public_Insert_Registrations" on public.registrations for insert to public with check (true);
+
 -- 5. INSERTAR acompañantes
-create policy "Public_Insert_Companions" on public.companions for insert to public with check (true);
+drop policy if exists "Public_Insert_Companions" on public.group_members;
+create policy "Public_Insert_Companions" on public.group_members for insert to public with check (true);
+
 -- 6. Enviar mensajes de contacto
+drop policy if exists "Public_Insert_Contact" on public.contact_messages;
 create policy "Public_Insert_Contact" on public.contact_messages for insert to public with check (true);
 
 
--- PERMISOS ADMINISTRADOR (Solo tú logueado en Supabase / Auth Panel en el /admin)
--- Como el Dashboard de React usará Supabase Auth, los usuarios logueados ('authenticated') 
--- tendrán control absoluto sobre todo.
+-- PERMISOS ADMINISTRADOR
+drop policy if exists "Admin_All_Camps" on public.camps;
 create policy "Admin_All_Camps" on public.camps for all to authenticated using (true);
+
+drop policy if exists "Admin_All_Registrations" on public.registrations;
 create policy "Admin_All_Registrations" on public.registrations for all to authenticated using (true);
-create policy "Admin_All_Companions" on public.companions for all to authenticated using (true);
+
+drop policy if exists "Admin_All_Companions" on public.group_members;
+create policy "Admin_All_Companions" on public.group_members for all to authenticated using (true);
+
+drop policy if exists "Admin_All_Timeline" on public.timeline_events;
 create policy "Admin_All_Timeline" on public.timeline_events for all to authenticated using (true);
+
+drop policy if exists "Admin_All_Gallery" on public.gallery_images;
 create policy "Admin_All_Gallery" on public.gallery_images for all to authenticated using (true);
+
+drop policy if exists "Admin_All_Contact" on public.contact_messages;
 create policy "Admin_All_Contact" on public.contact_messages for all to authenticated using (true);
+
 
 
 /* ==============================================

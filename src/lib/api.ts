@@ -21,18 +21,32 @@ async function compressImage(file: File): Promise<File> {
     }
 }
 
+// Helper to sanitize filenames (remove accents, spaces, special chars)
+function sanitizeFilename(name: string): string {
+    return name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/[^a-zA-Z0-9._-]/g, "_") // Replace special chars/spaces with underscore
+        .replace(/_{2,}/g, "_"); // Collapse multiple underscores
+}
+
 // Upload a File to Supabase Storage and return the public URL
 // Images are automatically compressed to WebP ≤200KB before upload
 export async function uploadToStorage(bucket: string, path: string, file: File): Promise<string> {
     const compressedFile = await compressImage(file);
-    // Update path extension to .webp to match compressed file
-    const webpPath = path.replace(/\.[^.]+$/, '') + '.webp';
-    const { data, error } = await supabase.storage.from(bucket).upload(webpPath, compressedFile, {
+    
+    // Sanitize path including the filename part
+    const pathParts = path.split('/');
+    const lastPart = pathParts.pop() || '';
+    const sanitizedName = sanitizeFilename(lastPart.replace(/\.[^.]+$/, '')) + '.webp';
+    const sanitizedPath = [...pathParts, sanitizedName].join('/');
+
+    const { data, error } = await supabase.storage.from(bucket).upload(sanitizedPath, compressedFile, {
         upsert: true,
         contentType: 'image/webp',
     });
     if (error) throw new Error(`Upload failed: ${error.message}`);
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(webpPath);
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(sanitizedPath);
     return publicUrl;
 }
 
@@ -100,6 +114,11 @@ const rawApi = {
             const { data, error } = await supabase.from('registrations').update(payload).eq('id', id).select();
             if (error) throw new Error(error.message);
             return data;
+        },
+        getOccupancy: async (campId: string) => {
+            const { data, error } = await supabase.from('registrations').select('group_size').eq('camp_id', campId);
+            if (error) throw new Error(error.message);
+            return data.reduce((acc: number, r: any) => acc + (r.group_size || 1), 0);
         }
     },
 

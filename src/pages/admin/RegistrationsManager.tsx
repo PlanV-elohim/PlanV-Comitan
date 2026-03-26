@@ -12,6 +12,7 @@ export default function RegistrationsManager() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedCampFilter, setSelectedCampFilter] = useState('all');
+    const [paymentFilter, setPaymentFilter] = useState('all');
     const [selectedReg, setSelectedReg] = useState<any | null>(null);
     const [updatingReg, setUpdatingReg] = useState(false);
     const [magicAssigning, setMagicAssigning] = useState(false);
@@ -59,7 +60,8 @@ export default function RegistrationsManager() {
         const matchSearch = !q || [r.responsable_name, r.responsable_lastname, r.responsable_email, r.responsable_phone, getCampName(r.camp_id)]
             .some(v => (v || '').toLowerCase().includes(q));
         const matchCamp = selectedCampFilter === 'all' || String(r.camp_id) === selectedCampFilter;
-        return matchSearch && matchCamp;
+        const matchPayment = paymentFilter === 'all' || r.payment_status === paymentFilter;
+        return matchSearch && matchCamp && matchPayment;
     });
 
     const totalSpots = filtered.reduce((acc, r) => acc + (r.group_size || 1), 0);
@@ -252,6 +254,12 @@ export default function RegistrationsManager() {
                     <option value="all">Todos los campamentos</option>
                     {camps.map(c => <option key={c.id} value={String(c.id)}>{c.title}</option>)}
                 </select>
+                <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)} className="px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none font-medium basis-1/5 cursor-pointer">
+                    <option value="all">Estado: Todos</option>
+                    <option value="pending">⚠️ Pendiente</option>
+                    <option value="paid">✅ Pagado</option>
+                    <option value="cancelled">❌ Cancelado</option>
+                </select>
                 <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
                     <button 
                         onClick={() => setViewMode('reservations')}
@@ -319,12 +327,25 @@ export default function RegistrationsManager() {
                                         </div>
                                         <div className="flex flex-col gap-1 w-full sm:w-auto">
                                             {reg.check_in_status ? (
-                                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-bold px-2 py-0.5 rounded">
-                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Checked-In
+                                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                                                    <CheckCircle2 className="w-3 h-3" /> Checked-In
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-xs font-bold px-2 py-0.5 rounded">
-                                                    Pendiente
+                                                <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                                                    Pendiente Check-In
+                                                </span>
+                                            )}
+                                            {reg.payment_status === 'paid' ? (
+                                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                                                    ✅ Pagado
+                                                </span>
+                                            ) : reg.payment_status === 'cancelled' ? (
+                                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                                                    ❌ Cancelado
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
+                                                    ⚠️ Debe
                                                 </span>
                                             )}
                                             {reg.medical_cleared ? (

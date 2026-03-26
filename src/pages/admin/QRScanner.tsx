@@ -238,18 +238,20 @@ export default function QRScanner() {
                             <div className="w-20" /> {/* Balancer */}
                         </div>
 
-                        {/* Top Hero Section (Green) */}
-                        <div className="bg-gradient-to-b from-green-500 to-emerald-700 pt-24 pb-16 px-6 text-center relative overflow-hidden text-white flex flex-col items-center shadow-inner">
+                        {/* Top Hero Section (Conditional Status) */}
+                        <div className={`bg-gradient-to-b ${scanResult.registration?.payment_status !== 'paid' ? 'from-red-600 to-rose-800' : 'from-green-500 to-emerald-700'} pt-24 pb-16 px-6 text-center relative overflow-hidden text-white flex flex-col items-center shadow-inner`}>
                             <motion.div 
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ type: 'spring', bounce: 0.5, delay: 0.2 }}
                                 className="w-24 h-24 bg-white/20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-md shadow-lg border border-white/30 relative z-10"
                             >
-                                <CheckCircle2 className="w-12 h-12 text-white" />
+                                {scanResult.registration?.payment_status !== 'paid' ? <AlertCircle className="w-12 h-12 text-white" /> : <CheckCircle2 className="w-12 h-12 text-white" />}
                             </motion.div>
-                            <h3 className="text-3xl font-black tracking-tight relative z-10 drop-shadow-md">¡Acceso Autorizado!</h3>
-                            <p className="text-green-50 font-medium text-lg mt-2 relative z-10 opacity-90">{scanResult.camp?.title}</p>
+                            <h3 className="text-3xl font-black tracking-tight relative z-10 drop-shadow-md">
+                                {scanResult.registration?.payment_status !== 'paid' ? '⚠️ PAGO PENDIENTE' : '¡Acceso Autorizado!'}
+                            </h3>
+                            <p className="text-white/90 font-medium text-lg mt-2 relative z-10 opacity-90">{scanResult.camp?.title}</p>
                             
                             {/* Deco curves */}
                             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
