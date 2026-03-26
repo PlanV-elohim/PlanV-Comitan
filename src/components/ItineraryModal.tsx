@@ -85,47 +85,66 @@ export default function ItineraryModal({ camp, onClose }: ItineraryModalProps) {
                             <p className="text-gray-500 text-sm mt-2 px-4">El administrador aún no ha publicado el cronograma detallado.</p>
                         </div>
                     ) : (
-                        <div className="relative border-l-2 border-primary/20 ml-3 py-2 space-y-10">
-                            {events.map((event, idx) => {
-                                const startTime = new Date(event.start_time);
-                                const endTime = new Date(event.end_time);
-                                const timeStr = startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                                const durationStr = `${timeStr} - ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                                
-                                const isNow = new Date() >= startTime && new Date() <= endTime;
+                        <div className="relative border-l-2 border-primary/20 ml-3 py-2 space-y-12">
+                            {/* Group events by day */}
+                            {(() => {
+                                const groups: Record<string, any[]> = {};
+                                events.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).forEach(event => {
+                                    const dateKey = new Date(event.start_time).toLocaleDateString();
+                                    if (!groups[dateKey]) groups[dateKey] = [];
+                                    groups[dateKey].push(event);
+                                });
 
-                                return (
-                                    <motion.div 
-                                        key={event.id}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        className="relative pl-8"
-                                    >
-                                        {/* Timeline Dot */}
-                                        <div className={`absolute -left-[11px] top-1.5 w-5 h-5 rounded-full border-4 border-white dark:border-gray-900 shadow-sm transition-all ${isNow ? 'bg-primary scale-125 ring-4 ring-primary/20' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-                                        
-                                        <div className={`p-5 rounded-3xl border transition-all ${isNow ? 'bg-primary/5 border-primary/20 shadow-lg shadow-primary/5' : 'bg-gray-50/50 dark:bg-gray-800/50 border-transparent dark:border-gray-800/50'}`}>
-                                            <div className="flex justify-between items-start gap-4 mb-2">
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${isNow ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'}`}>
-                                                    {isNow ? 'AHORA MISMO' : durationStr}
-                                                </span>
-                                                {event.location && (
-                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                                        <MapPin className="w-3 h-3" /> {event.location}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h4 className={`text-lg font-black tracking-tight ${isNow ? 'text-primary' : 'dark:text-white'}`}>
-                                                {event.title}
-                                            </h4>
-                                            {event.description && (
-                                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 leading-relaxed">{event.description}</p>
-                                            )}
+                                return Object.entries(groups).map(([date, dayEvents], groupIdx) => (
+                                    <div key={date} className="space-y-8 relative">
+                                        <div className="absolute -left-[43px] top-0 bg-primary text-white text-[10px] font-black px-2 py-0.5 rounded-r-lg shadow-sm z-10">
+                                            DÍA {groupIdx + 1}
                                         </div>
-                                    </motion.div>
-                                );
-                            })}
+                                        
+                                        {dayEvents.map((event, idx) => {
+                                            const startTime = new Date(event.start_time);
+                                            const endTime = new Date(event.end_time);
+                                            const timeStr = startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                            const durationStr = `${timeStr} - ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                                            
+                                            const isNow = new Date() >= startTime && new Date() <= endTime;
+
+                                            return (
+                                                <motion.div 
+                                                    key={event.id}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    whileInView={{ opacity: 1, x: 0 }}
+                                                    viewport={{ once: true }}
+                                                    transition={{ delay: idx * 0.1 }}
+                                                    className="relative pl-8"
+                                                >
+                                                    {/* Timeline Dot */}
+                                                    <div className={`absolute -left-[11px] top-1.5 w-5 h-5 rounded-full border-4 border-white dark:border-gray-900 shadow-sm transition-all ${isNow ? 'bg-primary scale-125 ring-4 ring-primary/20' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+                                                    
+                                                    <div className={`p-5 rounded-[2rem] border transition-all ${isNow ? 'bg-primary/5 border-primary/20 shadow-lg shadow-primary/5' : 'bg-gray-50/50 dark:bg-gray-800/50 border-transparent dark:border-gray-800/50'}`}>
+                                                        <div className="flex justify-between items-start gap-4 mb-2">
+                                                            <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${isNow ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'}`}>
+                                                                {isNow ? 'AHORA MISMO' : durationStr}
+                                                            </span>
+                                                            {event.location && (
+                                                                <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-tighter text-right">
+                                                                    <MapPin className="w-3 h-3" /> {event.location}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <h4 className={`text-lg font-black tracking-tight capitalize ${isNow ? 'text-primary' : 'dark:text-white'}`}>
+                                                            {event.title}
+                                                        </h4>
+                                                        {event.description && (
+                                                            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 leading-relaxed">{event.description}</p>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     )}
                 </div>

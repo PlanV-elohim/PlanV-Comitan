@@ -16,6 +16,13 @@ import {
 import { supabaseApi } from '../../lib/api';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
 
+// Helper to format date for datetime-local input using local time
+const toLocalISOString = (date: Date) => {
+    const tzOffset = date.getTimezoneOffset() * 60000; // offset in milliseconds
+    const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    return localISOTime;
+};
+
 export default function ItineraryManager() {
     const [camps, setCamps] = useState<any[]>([]);
     const [selectedCampId, setSelectedCampId] = useState<string | null>(null);
@@ -85,9 +92,9 @@ export default function ItineraryManager() {
 
     function openEditModal(event: any) {
         setEditingEvent(event);
-        // Format dates for datetime-local input
-        const start = new Date(event.start_time).toISOString().slice(0, 16);
-        const end = new Date(event.end_time).toISOString().slice(0, 16);
+        // Format dates for datetime-local input using local time (fix for UTC shift)
+        const start = toLocalISOString(new Date(event.start_time));
+        const end = toLocalISOString(new Date(event.end_time));
         
         setFormData({
             title: event.title,
@@ -217,56 +224,83 @@ export default function ItineraryManager() {
                             </button>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {events.map((event, idx) => {
-                                const startTime = new Date(event.start_time);
-                                const endTime = new Date(event.end_time);
-                                const timeStr = `${startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                                
-                                return (
-                                    <motion.div 
-                                        key={event.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col md:flex-row md:items-center gap-6 group hover:shadow-lg transition-all"
-                                    >
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-black rounded-full uppercase tracking-tighter">
-                                                    {timeStr}
-                                                </span>
-                                                {event.location && (
-                                                    <span className="flex items-center gap-1 text-gray-400 text-xs font-medium">
-                                                        <MapPin className="w-3 h-3" /> {event.location}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="text-xl font-black dark:text-white">{event.title}</h3>
-                                            {event.description && (
-                                                <p className="text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 text-sm">{event.description}</p>
-                                            )}
+                        <div className="space-y-12">
+                            {/* Group events by day */}
+                            {(() => {
+                                const groups: Record<string, any[]> = {};
+                                events.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).forEach(event => {
+                                    const dateKey = new Date(event.start_time).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+                                    if (!groups[dateKey]) groups[dateKey] = [];
+                                    groups[dateKey].push(event);
+                                });
+
+                                return Object.entries(groups).map(([date, dayEvents], groupIdx) => (
+                                    <div key={date} className="space-y-4">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 bg-gray-50 dark:bg-gray-950 px-4 py-1 rounded-full border border-gray-100 dark:border-gray-800 shadow-sm capitalize">
+                                                {date}
+                                            </h4>
+                                            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
                                         </div>
                                         
-                                        <div className="flex items-center gap-2">
-                                            <button 
-                                                onClick={() => openEditModal(event)}
-                                                className="p-3 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                                                title="Editar"
-                                            >
-                                                <Edit2 className="w-5 h-5" />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(event.id)}
-                                                className="p-3 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                                        <div className="space-y-4">
+                                            {dayEvents.map((event, idx) => {
+                                                const startTime = new Date(event.start_time);
+                                                const endTime = new Date(event.end_time);
+                                                const timeStr = `${startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                                                
+                                                return (
+                                                    <motion.div 
+                                                        key={event.id}
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        whileInView={{ opacity: 1, y: 0 }}
+                                                        viewport={{ once: true }}
+                                                        transition={{ delay: idx * 0.05 }}
+                                                        className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col md:flex-row md:items-center gap-6 group hover:shadow-lg transition-all"
+                                                    >
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap items-center gap-3 mb-2">
+                                                                <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-black rounded-full uppercase tracking-tighter">
+                                                                    {timeStr}
+                                                                </span>
+                                                                {event.location && (
+                                                                    <span className="flex items-center gap-1 text-gray-400 text-xs font-medium">
+                                                                        <MapPin className="w-3 h-3" /> {event.location}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h3 className="text-xl font-black dark:text-white capitalize">{event.title}</h3>
+                                                            {event.description && (
+                                                                <p className="text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 text-sm">{event.description}</p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-2">
+                                                            <button 
+                                                                onClick={() => openEditModal(event)}
+                                                                className="flex-1 md:flex-none p-3 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all flex items-center justify-center gap-2"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit2 className="w-5 h-5" />
+                                                                <span className="md:hidden font-bold text-sm">Editar</span>
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleDelete(event.id)}
+                                                                className="flex-1 md:flex-none p-3 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all flex items-center justify-center gap-2"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 className="w-5 h-5" />
+                                                                <span className="md:hidden font-bold text-sm">Eliminar</span>
+                                                            </button>
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
                                         </div>
-                                    </motion.div>
-                                );
-                            })}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     )}
                 </div>
@@ -306,14 +340,14 @@ export default function ItineraryManager() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
                                             <label className="text-xs font-black uppercase tracking-widest text-gray-400 pl-1">Inicio</label>
                                             <input 
                                                 required type="datetime-local"
                                                 value={formData.start_time} 
                                                 onChange={e => setFormData({...formData, start_time: e.target.value})}
-                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-3.5 outline-none dark:text-white focus:ring-2 focus:ring-primary transition-all"
+                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-[1.25rem] px-5 py-4 outline-none dark:text-white focus:ring-2 focus:ring-primary transition-all shadow-inner text-base"
                                             />
                                         </div>
                                         <div className="space-y-1.5">
@@ -322,7 +356,7 @@ export default function ItineraryManager() {
                                                 required type="datetime-local"
                                                 value={formData.end_time} 
                                                 onChange={e => setFormData({...formData, end_time: e.target.value})}
-                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-2xl px-5 py-3.5 outline-none dark:text-white focus:ring-2 focus:ring-primary transition-all"
+                                                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-[1.25rem] px-5 py-4 outline-none dark:text-white focus:ring-2 focus:ring-primary transition-all shadow-inner text-base"
                                             />
                                         </div>
                                     </div>

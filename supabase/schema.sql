@@ -60,6 +60,7 @@ create table if not exists public.group_members (
 create table if not exists public.timeline_events (
   id uuid default uuid_generate_v4() primary key,
   year text not null,
+  date_string text, -- Opcional: para mostrar meses o rangos específicos
   title text not null,
   location text not null,
   description text not null,

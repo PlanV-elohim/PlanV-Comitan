@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, History } from 'lucide-react';
 import { supabaseApi } from '../lib/api';
 
 const TimelineItem = ({ camp, index }: { camp: any; index: number }) => {
@@ -89,7 +89,7 @@ export default function Timeline() {
       .catch((err: Error) => console.error("Error loading timeline:", err));
   }, []);
 
-  if (events.length === 0) return null;
+  const isEmpty = events.length === 0;
 
   return (
     <section id="historia" className="py-20 md:py-32 relative bg-gray-50 dark:bg-gray-950/50 overflow-hidden transition-colors duration-300">
@@ -116,20 +116,36 @@ export default function Timeline() {
         </motion.div>
 
         <div className="relative" ref={containerRef}>
-          {/* Central Line */}
-          <div className="absolute left-[2.25rem] md:left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800 -translate-x-1/2" />
-          
-          {/* Animated fill line */}
-          <motion.div 
-            style={{ height: lineHeight }}
-            className="absolute left-[2.25rem] md:left-1/2 top-0 w-0.5 bg-gradient-to-b from-primary via-orange-400 to-primary -translate-x-1/2 origin-top" 
-          />
+          {!isEmpty && (
+            <>
+              {/* Central Line */}
+              <div className="absolute left-[2.25rem] md:left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800 -translate-x-1/2" />
+              
+              {/* Animated fill line */}
+              <motion.div 
+                style={{ height: lineHeight }}
+                className="absolute left-[2.25rem] md:left-1/2 top-0 w-0.5 bg-gradient-to-b from-primary via-orange-400 to-primary -translate-x-1/2 origin-top" 
+              />
 
-          <div className="relative pt-10 pb-10">
-            {events.map((camp, i) => (
-              <TimelineItem key={camp.id} camp={camp} index={i} />
-            ))}
-          </div>
+              <div className="relative pt-10 pb-10">
+                {events.map((camp, i) => (
+                  <TimelineItem key={camp.id} camp={camp} index={i} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {isEmpty && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              className="py-20 text-center bg-white/50 dark:bg-gray-900/50 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-gray-800"
+            >
+              <History className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold dark:text-white mb-2">Construyendo el Futuro</h3>
+              <p className="text-gray-500 max-w-md mx-auto">Estamos preparando la galería de nuestros momentos más increíbles. ¡Vuelve pronto para revivir la historia!</p>
+            </motion.div>
+          )}
         </div>
       </div>
     </section>

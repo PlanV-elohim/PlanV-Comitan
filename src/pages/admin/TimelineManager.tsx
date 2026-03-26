@@ -9,7 +9,7 @@ export default function TimelineManager() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const { showToast } = useToast();
     const [formData, setFormData] = useState({
         year: '',
@@ -75,9 +75,9 @@ export default function TimelineManager() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!confirm('¿Eliminar este evento del timeline?')) return;
-        await supabaseApi.timeline.delete(id.toString());
+        await supabaseApi.timeline.delete(id);
         setEvents(events.filter(ev => ev.id !== id));
         showToast('Evento eliminado', 'success');
     };
