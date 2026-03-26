@@ -131,18 +131,24 @@ export default function RegistrationsManager() {
         }
         
         const campId = Number(selectedCampFilter);
-        const campCabins = cabins.filter(c => c.camp_id === campId);
+        let campCabins = [...cabins.filter(c => c.camp_id === campId)];
         
-        if(campCabins.length === 0) {
-            alert('No hay cabañas creadas para este campamento. Ve a la sección de Cabañas primero.');
-            return;
-        }
-
-        const confirmed = window.confirm('🪄 Asignación Mágica:\nEl sistema agrupará a los equipos en las cabañas disponibles respetando la capacidad máxima. ¿Deseas auto-asignar a todos los que aún no tienen cabaña?');
+        const confirmed = window.confirm('🪄 Asignación Mágica:\nEl sistema acomodará a los hombres en la Iglesia y a las mujeres en el Hospedaje. Si no existen estos espacios, se crearán automáticamente. ¿Deseas continuar?');
         if(!confirmed) return;
 
         setMagicAssigning(true);
         try {
+            // Auto-create Church and Lodging if no cabins exist
+            if(campCabins.length === 0) {
+                const churchPayload = { camp_id: campId, name: 'Iglesia (Hombres)', capacity: 300, gender: 'male' };
+                const lodgingPayload = { camp_id: campId, name: 'Hospedaje (Mujeres)', capacity: 300, gender: 'female' };
+                const [churchRes, lodgingRes] = await Promise.all([
+                    supabaseApi.cabins.create(churchPayload),
+                    supabaseApi.cabins.create(lodgingPayload)
+                ]);
+                campCabins = [...churchRes, ...lodgingRes];
+            }
+
             const campRegs = registrations.filter(r => r.camp_id === campId);
             const campRegIds = campRegs.map(r => r.id);
             const campMembers = members.filter(m => campRegIds.includes(m.registration_id));
