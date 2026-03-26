@@ -157,28 +157,56 @@ export default function RegistrationsManager() {
             const updatesReg: {id: string, cabin_id: number}[] = [];
             const updatesMem: {id: string, cabin_id: number}[] = [];
 
-            // Grouping logic (keep groups together)
+            // Grouping logic (keep groups together by gender)
             for (const r of campRegs) {
                 const groupHolders = !r.cabin_id ? [r] : [];
                 const groupMems = campMembers.filter(m => m.registration_id === r.id && !m.cabin_id);
-                const totalToAssign = groupHolders.length + groupMems.length;
-
-                if (totalToAssign === 0) continue;
-
-                // Find a cabin with space
-                let assignedCabin = campCabins.find(c => (c.capacity - (occupation[c.id] || 0)) >= totalToAssign);
                 
-                // Fallback: If no single cabin fits the whole group, assign to any cabin with space
-                if (!assignedCabin) {
-                    assignedCabin = campCabins.find(c => (c.capacity - (occupation[c.id] || 0)) > 0);
-                }
+                const allUnassigned = [...groupHolders.map(x => ({type: 'reg', ...x})), ...groupMems.map(x => ({type: 'mem', ...x}))];
+                
+                // Group these unassigned people by gender
+                const byGender: Record<string, any[]>  = { male: [], female: [], other: [] };
+                allUnassigned.forEach(p => {
+                    if (p.gender === 'male') byGender.male.push(p);
+                    else if (p.gender === 'female') byGender.female.push(p);
+                    else byGender.other.push(p);
+                });
 
-                if (assignedCabin) {
-                    const cid = assignedCabin.id;
-                    if(groupHolders.length > 0) updatesReg.push({ id: r.id, cabin_id: cid });
-                    groupMems.forEach(m => updatesMem.push({ id: m.id, cabin_id: cid }));
-                    occupation[cid] += totalToAssign;
-                }
+                // Helper to assign a specific gender group to a single cabin if possible
+                const assignGroup = (groupList: any[], reqGender: string) => {
+                    if (groupList.length === 0) return;
+                    let assignedCabin = campCabins.find(c => 
+                        (c.capacity - (occupation[c.id] || 0)) >= groupList.length && 
+                        (c.gender === reqGender || c.gender === 'mixed' || !c.gender)
+                    );
+
+                    // fallback: if no single cabin fits the whole subgroup, assign them individually
+                    if (!assignedCabin) {
+                        for (const p of groupList) {
+                            let indivCabin = campCabins.find(c => 
+                                (c.capacity - (occupation[c.id] || 0)) >= 1 && 
+                                (c.gender === reqGender || c.gender === 'mixed' || !c.gender)
+                            );
+                            if (indivCabin) {
+                                if (p.type === 'reg') updatesReg.push({ id: p.id, cabin_id: indivCabin.id });
+                                else updatesMem.push({ id: p.id, cabin_id: indivCabin.id });
+                                occupation[indivCabin.id] += 1;
+                            }
+                        }
+                    } else {
+                        const cid = assignedCabin.id;
+                        groupList.forEach(p => {
+                            if (p.type === 'reg') updatesReg.push({ id: p.id, cabin_id: cid });
+                            else updatesMem.push({ id: p.id, cabin_id: cid });
+                        });
+                        occupation[cid] += groupList.length;
+                    }
+                };
+
+                assignGroup(byGender.male, 'male');
+                assignGroup(byGender.female, 'female');
+                // For 'other' or missing gender, just try to put in mixed or fallback
+                assignGroup(byGender.other, 'mixed');
             }
 
             if(updatesReg.length === 0 && updatesMem.length === 0) {
