@@ -131,6 +131,20 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='gallery_images' AND column_name='caption') THEN 
         ALTER TABLE public.gallery_images ADD COLUMN caption TEXT;
     END IF;
+
+    -- Promociones en Campamentos
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='camps' AND column_name='has_promo') THEN 
+        ALTER TABLE public.camps ADD COLUMN has_promo BOOLEAN DEFAULT false;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='camps' AND column_name='promo_description') THEN 
+        ALTER TABLE public.camps ADD COLUMN promo_description TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='camps' AND column_name='promo_price') THEN 
+        ALTER TABLE public.camps ADD COLUMN promo_price NUMERIC;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='camps' AND column_name='promo_capacity') THEN 
+        ALTER TABLE public.camps ADD COLUMN promo_capacity INT;
+    END IF;
 END $$;
 
 /* ==============================================

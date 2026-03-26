@@ -19,4 +19,8 @@ export interface CampEvent {
     status?: string;
     image_url?: string;
     registered?: number;
+    has_promo?: boolean;
+    promo_description?: string;
+    promo_price?: number;
+    promo_capacity?: number;
 }

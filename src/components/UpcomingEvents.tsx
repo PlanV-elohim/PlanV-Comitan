@@ -123,7 +123,12 @@ export default function UpcomingEvents({ onRegister, onOpenCalendar, onInfo }: U
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                             referrerPolicy="no-referrer"
                                         />
-                                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-dark flex items-center gap-2 shadow-lg">
+                                        {camp.has_promo && (
+                                            <div className="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-2 rounded-full text-xs font-black tracking-wide shadow-lg flex items-center gap-1.5 border border-white/20 z-10">
+                                                <span className="text-[14px]">🎟️</span> PROMO ACTIVA
+                                            </div>
+                                        )}
+                                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-dark flex items-center gap-2 shadow-lg z-10">
                                             <div className="w-2 h-2 rounded-full bg-green-500 animate-[ping_2s_infinite]" />
                                             {camp.capacity - (camp.registered || 0)} cupos libres
                                         </div>

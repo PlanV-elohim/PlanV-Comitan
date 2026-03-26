@@ -24,7 +24,11 @@ export default function CampsManager() {
         capacity: 100,
         price: 0,
         image_url: '',
-        status: 'active'
+        status: 'active',
+        has_promo: false,
+        promo_description: '',
+        promo_price: 0,
+        promo_capacity: 0
     });
 
     useEffect(() => {
@@ -65,7 +69,11 @@ export default function CampsManager() {
                 capacity: camp.capacity || 100,
                 price: camp.price || 0,
                 image_url: camp.image_url || '',
-                status: camp.status || 'active'
+                status: camp.status || 'active',
+                has_promo: camp.has_promo || false,
+                promo_description: camp.promo_description || '',
+                promo_price: camp.promo_price || 0,
+                promo_capacity: camp.promo_capacity || 0
             });
         } else {
             setEditingId(null);
@@ -77,7 +85,11 @@ export default function CampsManager() {
                 capacity: 100,
                 price: 0,
                 image_url: '',
-                status: 'active'
+                status: 'active',
+                has_promo: false,
+                promo_description: '',
+                promo_price: 0,
+                promo_capacity: 0
             });
             setImageFile(null);
         }
@@ -175,6 +187,11 @@ export default function CampsManager() {
                                             }`}>
                                                 {camp.status === 'active' ? 'Activo' : camp.status === 'history' ? 'Pasado' : 'Borrador'}
                                             </span>
+                                            {camp.has_promo && (
+                                                <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                                    Promo Activa
+                                                </span>
+                                            )}
                                             <h2 className="text-2xl font-bold dark:text-white">{camp.title}</h2>
                                         </div>
                                         <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mt-3">
@@ -302,6 +319,34 @@ export default function CampsManager() {
                                             <option value="draft">Borrador (Oculto)</option>
                                             <option value="history">Pasado (Solo en línea de tiempo)</option>
                                         </select>
+                                    </div>
+
+                                    {/* Promociones */}
+                                    <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Activar Promoción Extra (Descuento)</label>
+                                            <div className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" checked={formData.has_promo} onChange={e => setFormData({...formData, has_promo: e.target.checked})} className="sr-only peer" />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        {formData.has_promo && (
+                                            <div className="grid sm:grid-cols-3 gap-4 bg-orange-50 dark:bg-orange-900/10 p-5 rounded-2xl border border-orange-100 dark:border-orange-900/30">
+                                                <div className="col-span-full space-y-1.5 flex flex-col">
+                                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Texto Visible (Ej: Promo Parejas 2x $600)</label>
+                                                    <input required={formData.has_promo} type="text" value={formData.promo_description} onChange={e => setFormData({...formData, promo_description: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-orange-200 dark:border-orange-800/50 bg-white dark:bg-gray-800/50 dark:text-white focus:ring-2 focus:ring-orange-500/20 outline-none" />
+                                                </div>
+                                                <div className="space-y-1.5 flex flex-col">
+                                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Precio (Por Persona)</label>
+                                                    <input required={formData.has_promo} type="number" min="0" value={formData.promo_price} onChange={e => setFormData({...formData, promo_price: parseFloat(e.target.value) || 0})} className="w-full px-4 py-3 rounded-xl border border-orange-200 dark:border-orange-800/50 bg-white dark:bg-gray-800/50 dark:text-white outline-none" placeholder="300" />
+                                                </div>
+                                                <div className="space-y-1.5 flex flex-col sm:col-span-2">
+                                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Límite de Usos (0 = infinito)</label>
+                                                    <input required={formData.has_promo} type="number" min="0" value={formData.promo_capacity} onChange={e => setFormData({...formData, promo_capacity: parseInt(e.target.value) || 0})} className="w-full px-4 py-3 rounded-xl border border-orange-200 dark:border-orange-800/50 bg-white dark:bg-gray-800/50 dark:text-white outline-none" placeholder="30" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

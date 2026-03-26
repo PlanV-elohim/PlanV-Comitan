@@ -193,9 +193,16 @@ export default function RegisterPage() {
         }
     };
 
+    const isPromoActive = useMemo(() => {
+        if (!camp.has_promo) return false;
+        if (camp.promo_capacity && camp.promo_capacity > 0 && currentOccupancy >= camp.promo_capacity) return false;
+        return true;
+    }, [camp, currentOccupancy]);
+
+    const activePrice = isPromoActive ? (camp.promo_price ?? 0) : (camp.price ?? 0);
     const cardReady = card.number.replace(/\s/g, '').length === 16 && card.name.trim().length > 1;
     const currentGroupSize = typeof groupSize === 'number' ? groupSize : (parseInt(groupSize || '2') || 2);
-    const totalPrice = (camp.price ?? 0) * (regType === 'group' ? currentGroupSize : 1);
+    const totalPrice = activePrice * (regType === 'group' ? currentGroupSize : 1);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
@@ -216,6 +223,31 @@ export default function RegisterPage() {
             </header>
 
             <main className="flex-1 overflow-y-auto w-full max-w-2xl mx-auto p-4 sm:p-8 flex flex-col">
+                {isPromoActive && step !== 'success' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="mb-6 bg-gradient-to-r from-orange-500 to-red-600 rounded-3xl p-5 sm:p-6 shadow-xl shadow-orange-500/20 flex flex-col sm:flex-row items-center gap-5 text-white relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-2xl transform -translate-x-1/2 translate-y-1/2" />
+                        
+                        <div className="shrink-0 bg-white/20 p-4 rounded-full backdrop-blur-md relative z-10 shadow-inner">
+                           <span className="text-3xl">🏷️</span>
+                        </div>
+                        <div className="flex-1 text-center sm:text-left relative z-10">
+                            <h3 className="font-black text-xl sm:text-2xl tracking-tight leading-tight shadow-sm drop-shadow-md">
+                                {camp.promo_description}
+                            </h3>
+                            <div className="mt-2.5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                <span className="text-white/90 text-sm font-medium">Precio Especial:</span>
+                                <span className="font-bold text-white bg-white/20 px-3 py-1 rounded-lg shadow-sm border border-white/10">${camp.promo_price} MXN</span> 
+                                {(camp.promo_capacity ?? 0) > 0 && <span className="inline-block px-2.5 py-1 bg-red-900/40 rounded-lg text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm border border-red-900/30">— Quedan pocos lugares</span>}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
