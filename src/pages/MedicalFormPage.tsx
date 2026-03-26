@@ -127,8 +127,10 @@ export default function MedicalFormPage() {
                 {!loading && !isSuccess && (
                     <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                         <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(step / 3) * 100}%` }}
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: step / 3 }}
+                            style={{ transformOrigin: 'left' }}
+                            transition={{ duration: 0.4, ease: 'easeOut' }}
                             className="h-full bg-gradient-to-r from-primary to-orange-400"
                         />
                     </div>

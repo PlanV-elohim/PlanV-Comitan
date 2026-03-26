@@ -97,30 +97,29 @@ export default function Gallery() {
                 </motion.div>
 
                 {/* Masonry Grid via CSS columns */}
-                <motion.div
-                    layout
-                    className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3"
-                >
+                <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3 will-change-transform">
                     <AnimatePresence>
                         {filteredImages.map((img, i) => (
                             <motion.button
                                 key={img.src + activeFilter}
-                                layout
-                                initial={{ opacity: 0, scale: 0.85 }}
+                                initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.85 }}
-                                transition={{ duration: 0.3, delay: i * 0.04 }}
-                                whileHover={{ scale: 1.02 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.18) }}
                                 onClick={() => setSelectedImage(i)}
                                 className="relative overflow-hidden rounded-2xl group cursor-pointer break-inside-avoid w-full block"
                             >
-                                <img
-                                    src={img.src}
-                                    alt={img.caption}
-                                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700"
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer"
-                                />
+                                {/* Fixed aspect box prevents CLS */}
+                                <div className="relative aspect-[4/3] bg-gray-200 dark:bg-gray-800">
+                                    <img
+                                        src={img.src}
+                                        alt={img.caption}
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-active:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                                     <p className="text-white text-xs font-medium truncate">{img.caption}</p>
                                     <ZoomIn className="absolute top-3 right-3 w-5 h-5 text-white/80" />
@@ -128,7 +127,7 @@ export default function Gallery() {
                             </motion.button>
                         ))}
                     </AnimatePresence>
-                </motion.div>
+                </div>
 
                 {filteredImages.length === 0 && (
                     <p className="text-center text-gray-400 py-16">No hay fotos en esta categoría aún.</p>

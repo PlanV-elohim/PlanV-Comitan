@@ -171,3 +171,18 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: #4b5563;
 }
+
+/* Respect OS reduced-motion preference — skip all animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Gallery grid containment — limits browser layout recalc scope */
+.gallery-grid {
+  contain: layout style;
+}

@@ -1,13 +1,38 @@
 /// <reference types="vite/client" />
 import { supabase } from './supabase';
+import imageCompression from 'browser-image-compression';
+
+// Compress an image to WebP, max 1200px, max 200KB
+async function compressImage(file: File): Promise<File> {
+    const options = {
+        maxSizeMB: 0.2,           // 200KB
+        maxWidthOrHeight: 1200,   // max dimension
+        useWebWorker: true,
+        fileType: 'image/webp',
+        initialQuality: 0.85,
+    };
+    try {
+        const compressed = await imageCompression(file, options);
+        // Rename to .webp extension
+        return new File([compressed], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' });
+    } catch {
+        // If compression fails, return original (fallback safety)
+        return file;
+    }
+}
 
 // Upload a File to Supabase Storage and return the public URL
+// Images are automatically compressed to WebP ≤200KB before upload
 export async function uploadToStorage(bucket: string, path: string, file: File): Promise<string> {
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-        upsert: true
+    const compressedFile = await compressImage(file);
+    // Update path extension to .webp to match compressed file
+    const webpPath = path.replace(/\.[^.]+$/, '') + '.webp';
+    const { data, error } = await supabase.storage.from(bucket).upload(webpPath, compressedFile, {
+        upsert: true,
+        contentType: 'image/webp',
     });
     if (error) throw new Error(`Upload failed: ${error.message}`);
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(webpPath);
     return publicUrl;
 }
 

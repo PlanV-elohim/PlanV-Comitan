@@ -28,32 +28,27 @@ export default function AboutUs() {
                         </p>
                     </div>
                 </motion.div>
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true, amount: 0.1 }}
-                    transition={{ duration: 0.8 }}
-                    className="relative"
-                >
-                    <div className="aspect-square rounded-[3rem] overflow-hidden relative">
+
+                <div className="flex items-center justify-center p-4">
+                    <div className="w-full max-w-sm aspect-square bg-[#0a0a0a] flex items-center justify-center rounded-[3rem] shadow-2xl overflow-hidden p-10">
                         <img
-                            src="https://picsum.photos/seed/about/800/800"
-                            alt="Comunidad Plan V Elohim"
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
+                            src="/PLAN V EN CIRCULO.png"
+                            alt="Logo Plan V Elohim"
+                            className="w-full h-auto block"
+                            draggable="false"
                         />
-                        <div className="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
                     </div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.1 }}
-                        transition={{ delay: 0.4 }}
-                        className="absolute -bottom-8 -left-8 bg-white p-8 rounded-3xl shadow-xl border border-gray-100 max-w-xs"
-                    >
-                        <div className="text-4xl font-bold text-primary mb-2">+1000</div>
-                        <div className="text-gray-600 font-medium">Vidas transformadas a través de nuestros campamentos</div>
-                    </motion.div>
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{ delay: 0.4 }}
+                    className="md:col-start-2 -mt-16 bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 max-w-xs mx-auto md:mx-0 relative z-20"
+                >
+                    <div className="text-4xl font-bold text-primary mb-2">+1000</div>
+                    <div className="text-gray-600 dark:text-gray-400 font-medium">Vidas transformadas a través de nuestros campamentos</div>
                 </motion.div>
             </div>
         </section>

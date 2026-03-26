@@ -210,9 +210,10 @@ export default function RegisterPage() {
                                         </div>
                                         <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                                             <motion.div
-                                                className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full"
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${pct}%` }}
+                                                className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full origin-left"
+                                                initial={{ scaleX: 0 }}
+                                                animate={{ scaleX: pct / 100 }}
+                                                style={{ transformOrigin: 'left' }}
                                                 transition={{ duration: 0.5, ease: 'easeOut' }}
                                             />
                                         </div>
@@ -282,9 +283,10 @@ export default function RegisterPage() {
                                     <AnimatePresence>
                                         {regType === 'group' && (
                                             <motion.div
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: 'auto' }}
-                                                exit={{ opacity: 0, height: 0 }}
+                                                initial={{ opacity: 0, y: -8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -8 }}
+                                                transition={{ duration: 0.2 }}
                                                 className="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-2xl mt-6"
                                             >
                                                 <label htmlFor="group-size" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -496,7 +498,7 @@ export default function RegisterPage() {
 
                                     <AnimatePresence>
                                         {cardReady && (
-                                            <motion.div initial={{ opacity: 0, height: 0, y: 16 }} animate={{ opacity: 1, height: 'auto', y: 0 }} exit={{ opacity: 0, height: 0, y: 8 }} transition={{ duration: 0.4 }} className="overflow-hidden space-y-5 pt-3">
+                                            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.4 }} className="overflow-hidden space-y-5 pt-3">
                                                 <div className="grid grid-cols-2 gap-5">
                                                     <input type="text" inputMode="numeric" maxLength={5} placeholder="MM/AA" value={card.expiry} onChange={e => { let val = e.target.value.replace(/\D/g, '').slice(0, 4); if (val.length >= 3) val = val.slice(0, 2) + '/' + val.slice(2); setCard(c => ({ ...c, expiry: val })); }} onFocus={() => setPayInputFocused(true)} onBlur={() => setPayInputFocused(false)} className="w-full px-5 py-4 rounded-2xl border outline-none dark:border-gray-700 dark:bg-gray-800/50 dark:text-white font-mono text-lg" />
                                                     <input type="password" inputMode="numeric" maxLength={4} placeholder="CVV" value={card.cvv} onChange={e => setCard(c => ({ ...c, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))} onFocus={() => { setCardFlipped(true); setPayInputFocused(false); }} onBlur={() => { setCardFlipped(false); setPayInputFocused(false); }} className="w-full px-5 py-4 rounded-2xl border outline-none dark:border-gray-700 dark:bg-gray-800/50 dark:text-white font-mono tracking-widest text-lg" />

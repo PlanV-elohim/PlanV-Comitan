@@ -74,7 +74,6 @@ export default function Home() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
         <CustomCursor />
         <GlobalTouchEffect />
-        <ThemeToggle />
         <Navbar onJoin={() => setShowJoin(true)} modalOpen={!!(showCalendar || showJoin || infoCamp)} />
 
         <AnimatePresence mode="wait">
@@ -133,8 +132,7 @@ export default function Home() {
         </ScrollSection>
 
         <Footer onJoinForm={() => setShowJoin(true)} />
-        <WhatsAppButton phoneNumber="1234567890" message="¡Hola! Me gustaría obtener más información sobre los campamentos." />
-        <BottomNavbar /> 
+        <BottomNavbar modalOpen={!!(showSplash || showCalendar || showJoin || infoCamp)} /> 
         <ScrollToTop />
         <PWAInstallPrompt />
 

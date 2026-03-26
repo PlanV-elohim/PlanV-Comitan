@@ -72,9 +72,9 @@ export default function Testimonials() {
     };
 
     const variants = {
-        enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0, filter: 'blur(8px)' }),
-        center: { x: 0, opacity: 1, filter: 'blur(0px)' },
-        exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0, filter: 'blur(8px)' }),
+        enter: (dir: number) => ({ x: dir > 0 ? 40 : -40, opacity: 0 }),
+        center: { x: 0, opacity: 1 },
+        exit: (dir: number) => ({ x: dir > 0 ? -40 : 40, opacity: 0 }),
     };
 
     const t = testimonials[current];

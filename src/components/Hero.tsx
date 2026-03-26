@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, useMotionValue } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { supabaseApi } from '../lib/api';
 
@@ -7,9 +7,19 @@ const FALLBACK_BG = '';
 
 export default function Hero() {
     const ref = useRef(null);
-    const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-    const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
-    const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    // Static motion values used on mobile (no scroll listener)
+    const staticY = useMotionValue('0%');
+    const staticOpacity = useMotionValue(1);
+
+    // Parallax only on desktop
+    const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+    const parallaxY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
+    const parallaxOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+    const y = isMobile ? staticY : parallaxY;
+    const opacity = isMobile ? staticOpacity : parallaxOpacity;
     const [heroBg, setHeroBg] = useState(FALLBACK_BG);
     const [heroMobileBg, setHeroMobileBg] = useState(FALLBACK_BG);
     const [imageHasTextDesktop, setImageHasTextDesktop] = useState(false);
@@ -66,6 +76,8 @@ export default function Hero() {
                     />
                     {/* Seamless fade mask from solid black on the left to transparent */}
                     <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-black via-black/70 to-transparent pointer-events-none" />
+                    {/* Top fade for transparent navbar eligibility - deeper and smoother */}
+                    <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none" />
                     {/* Optional full dim if imageHasText */}
                     <div className={`absolute inset-0 transition-opacity duration-500 ${imageHasTextDesktop ? 'bg-black/30' : 'bg-transparent'}`} />
                 </div>
@@ -73,7 +85,7 @@ export default function Hero() {
                 {/* Mobile Image with fade overlay */}
                 <div
                     style={{ backgroundImage: `url(${heroMobileBg})` }}
-                    className="w-full h-[80%] absolute top-0 bg-contain bg-top bg-no-repeat block md:hidden mt-[100px]"
+                    className="w-full h-full absolute top-0 bg-contain bg-top bg-no-repeat block md:hidden"
                 />
                 {/* Mobile fade overlays */}
                 <div className="absolute inset-0 block md:hidden pointer-events-none">
@@ -84,8 +96,8 @@ export default function Hero() {
                     {/* Side fades */}
                     <div className="absolute inset-y-0 left-0 w-[15%] bg-gradient-to-r from-black to-transparent" />
                     <div className="absolute inset-y-0 right-0 w-[15%] bg-gradient-to-l from-black to-transparent" />
-                    {/* Top fade near navbar */}
-                    <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-b from-black/60 to-transparent" />
+                    {/* Top fade near navbar - even deeper and smoother for h-20 navbar */}
+                    <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-black/95 via-black/70 to-transparent" />
                 </div>
             </motion.div>
 

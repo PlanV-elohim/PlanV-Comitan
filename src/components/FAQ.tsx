@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { ChevronDown } from 'lucide-react';
 
 const faqs = [
@@ -75,21 +75,16 @@ export default function FAQ() {
                                     <ChevronDown className="w-5 h-5" />
                                 </motion.div>
                             </button>
-                            <AnimatePresence>
-                                {openIndex === i && (
-                                    <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: "auto", opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <div className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed">
-                                            {faq.answer}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {/* CSS max-height accordion — no Framer layout recalc */}
+                            <div
+                                className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${
+                                    openIndex === i ? 'max-h-96' : 'max-h-0'
+                                }`}
+                            >
+                                <div className="px-6 pb-6 text-gray-600 dark:text-gray-400 leading-relaxed">
+                                    {faq.answer}
+                                </div>
+                            </div>
                         </motion.div>
                     ))}
                 </div>
