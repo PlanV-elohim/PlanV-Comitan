@@ -17,7 +17,15 @@ const PLACEHOLDERS = [
     { src: "https://picsum.photos/seed/g9/600/600", caption: "Equipo de líderes", event: "Campamento 2024" },
 ];
 
-type GalleryImage = { src: string; caption: string; event?: string };
+type GalleryImage = {
+    src: string;
+    is_active?: boolean;
+    created_at?: string;
+    camp_id?: string;
+    timeline_id?: string;
+    caption?: string;
+    event?: string; // This is derived from camp_id/timeline_id for filtering
+};
 
 export default function Gallery() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
@@ -27,30 +35,37 @@ export default function Gallery() {
     const [zoom, setZoom] = useState(false);
 
     useEffect(() => {
-        // Fetch camps to build filters
-        supabaseApi.camps.getAll()
-            .then((camps: any[]) => {
-                const campNames = camps.map((c: any) => c.title);
-                setEventFilters(['Todos', ...campNames, 'Generales']);
-            })
-            .catch(console.error);
-
-        supabaseApi.gallery.getAll('gallery')
-            .then((data: any[]) => {
+        // Fetch camps and timeline events for filters
+        Promise.all([
+            supabaseApi.camps.getAll(),
+            supabaseApi.timeline.getAll()
+        ]).then(([camps, timeline]) => {
+            const campNames = camps.map((c: any) => c.title);
+            const timelineNames = timeline.map((t: any) => t.title);
+            setEventFilters(['Todos', ...campNames, ...timelineNames, 'Generales']);
+            
+            // Fetch gallery images
+            return supabaseApi.gallery.getAll('gallery').then((data: any[]) => {
                 if (data.length > 0) {
-                    supabaseApi.camps.getAll().then((camps: any[]) => {
-                        setImages(data.map((img: any) => {
+                    setImages(data.map((img: any) => {
+                        let eventName = 'Generales';
+                        if (img.camp_id) {
                             const camp = camps.find((c: any) => c.id === img.camp_id);
-                            return { 
-                                src: img.image_url, 
-                                caption: img.caption || '', 
-                                event: camp ? camp.title : 'Generales' 
-                            };
-                        }));
-                    });
+                            if (camp) eventName = camp.title;
+                        } else if (img.timeline_id) {
+                            const history = timeline.find((t: any) => t.id === img.timeline_id);
+                            if (history) eventName = history.title;
+                        }
+                        
+                        return { 
+                            src: img.image_url, 
+                            caption: img.caption || '', 
+                            event: eventName
+                        };
+                    }));
                 }
-            })
-            .catch(() => {});
+            });
+        }).catch(console.error);
     }, []);
 
     const filteredImages = activeFilter === 'Todos'

@@ -11,6 +11,7 @@ type GalleryImage = {
     is_active: boolean; 
     created_at: string;
     camp_id?: string;
+    timeline_id?: string;
     caption?: string; 
 };
 
@@ -60,7 +61,8 @@ export default function GalleryManager() {
     const [uploadingHero, setUploadingHero] = useState(false);
     const [uploadingGallery, setUploadingGallery] = useState(false);
     const [camps, setCamps] = useState<any[]>([]);
-    const [selectedCampId, setSelectedCampId] = useState<string>('');
+    const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+    const [selectedTarget, setSelectedTarget] = useState<string>(''); // format: "camp:id" or "timeline:id"
     const { showToast } = useToast();
 
     const [uploadingHeroText, setUploadingHeroText] = useState(false);
@@ -83,6 +85,10 @@ export default function GalleryManager() {
 
         supabaseApi.camps.getAll()
             .then((data: any[]) => setCamps(data))
+            .catch(console.error);
+
+        supabaseApi.timeline.getAll()
+            .then((data: any[]) => setTimelineEvents(data))
             .catch(console.error);
     }, []);
 
@@ -125,14 +131,20 @@ export default function GalleryManager() {
     const handleGalleryUpload = async (files: FileList) => {
         try {
             setUploadingGallery(true);
+            const [targetType, targetId] = selectedTarget.split(':');
+            
             for (const file of Array.from(files)) {
                 const path = `gallery/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
                 const url = await uploadToStorage('gallery', path, file);
-                const res = await supabaseApi.gallery.create({ 
+                
+                const payload: any = { 
                     type: 'gallery', 
                     image_url: url,
-                    camp_id: selectedCampId || null 
-                });
+                    camp_id: targetType === 'camp' ? targetId : null,
+                    timeline_id: targetType === 'timeline' ? targetId : null
+                };
+
+                const res = await supabaseApi.gallery.create(payload);
                 const created = Array.isArray(res) ? res[0] : res;
                 setGalleryImages(prev => [created, ...prev]);
             }
@@ -294,16 +306,23 @@ export default function GalleryManager() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
                         <div className="flex-1 w-full">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block ml-1">Asociar a Campamento</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block ml-1">Asociar a Evento</label>
                             <select 
-                                value={selectedCampId} 
-                                onChange={(e) => setSelectedCampId(e.target.value)}
+                                value={selectedTarget} 
+                                onChange={(e) => setSelectedTarget(e.target.value)}
                                 className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-primary"
                             >
-                                <option value="">General / Sin Campamento</option>
-                                {camps.map(camp => (
-                                    <option key={camp.id} value={camp.id}>{camp.title}</option>
-                                ))}
+                                <option value="">General / Sin Evento</option>
+                                <optgroup label="Campamentos Actuales">
+                                    {camps.map(camp => (
+                                        <option key={camp.id} value={`camp:${camp.id}`}>{camp.title}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Historia (Timeline)">
+                                    {timelineEvents.map(ev => (
+                                        <option key={ev.id} value={`timeline:${ev.id}`}>{ev.year} - {ev.title}</option>
+                                    ))}
+                                </optgroup>
                             </select>
                         </div>
                         <div className="flex-1 w-full">
@@ -331,8 +350,15 @@ export default function GalleryManager() {
                             {(() => {
                                 const groups: Record<string, GalleryImage[]> = { 'Generales': [] };
                                 galleryImages.forEach(img => {
-                                    const camp = camps.find(c => c.id === img.camp_id);
-                                    const key = camp ? camp.title : 'Generales';
+                                    let key = 'Generales';
+                                    if (img.camp_id) {
+                                        const camp = camps.find(c => c.id === img.camp_id);
+                                        if (camp) key = camp.title;
+                                    } else if (img.timeline_id) {
+                                        const timeline = timelineEvents.find(t => t.id === img.timeline_id);
+                                        if (timeline) key = `Historia: ${timeline.title}`;
+                                    }
+                                    
                                     if (!groups[key]) groups[key] = [];
                                     groups[key].push(img);
                                 });

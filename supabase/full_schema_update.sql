@@ -80,6 +80,7 @@ create table if not exists public.gallery_images (
   type text not null, -- 'hero_bg', 'hero_bg_text', 'hero_mobile', 'hero_mobile_text', 'gallery'
   image_url text not null,
   camp_id uuid references public.camps(id) on delete set null, -- Added in migration
+  timeline_id uuid references public.timeline_events(id) on delete set null, -- Nuevo: para agrupar por historia
   caption text, -- Added in migration
   is_active boolean default true not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -123,6 +124,9 @@ BEGIN
     -- Camp_id y Caption en Galería
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='gallery_images' AND column_name='camp_id') THEN 
         ALTER TABLE public.gallery_images ADD COLUMN camp_id UUID REFERENCES public.camps(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='gallery_images' AND column_name='timeline_id') THEN 
+        ALTER TABLE public.gallery_images ADD COLUMN timeline_id UUID REFERENCES public.timeline_events(id) ON DELETE SET NULL;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='gallery_images' AND column_name='caption') THEN 
         ALTER TABLE public.gallery_images ADD COLUMN caption TEXT;
