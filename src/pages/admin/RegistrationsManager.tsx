@@ -150,6 +150,13 @@ export default function RegistrationsManager() {
             }
 
             const campRegs = registrations.filter(r => r.camp_id === campId);
+            
+            if (campRegs.length === 0) {
+                alert('⚠️ No hay ninguna inscripción en este campamento. Por favor, ve a la web pública y realiza un registro de prueba primero.');
+                setMagicAssigning(false);
+                return;
+            }
+
             const campRegIds = campRegs.map(r => r.id);
             const campMembers = members.filter(m => campRegIds.includes(m.registration_id));
 
