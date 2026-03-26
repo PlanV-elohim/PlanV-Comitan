@@ -22,14 +22,32 @@ type GalleryImage = { src: string; caption: string; event?: string };
 export default function Gallery() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
     const [images, setImages] = useState<GalleryImage[]>(PLACEHOLDERS);
+    const [eventFilters, setEventFilters] = useState<string[]>(['Todos', 'Generales']);
     const [activeFilter, setActiveFilter] = useState('Todos');
     const [zoom, setZoom] = useState(false);
 
     useEffect(() => {
+        // Fetch camps to build filters
+        supabaseApi.camps.getAll()
+            .then((camps: any[]) => {
+                const campNames = camps.map((c: any) => c.title);
+                setEventFilters(['Todos', ...campNames, 'Generales']);
+            })
+            .catch(console.error);
+
         supabaseApi.gallery.getAll('gallery')
             .then((data: any[]) => {
                 if (data.length > 0) {
-                    setImages(data.map((img: any) => ({ src: img.image_url, caption: img.caption || '', event: img.event || 'Generales' })));
+                    supabaseApi.camps.getAll().then((camps: any[]) => {
+                        setImages(data.map((img: any) => {
+                            const camp = camps.find((c: any) => c.id === img.camp_id);
+                            return { 
+                                src: img.image_url, 
+                                caption: img.caption || '', 
+                                event: camp ? camp.title : 'Generales' 
+                            };
+                        }));
+                    });
                 }
             })
             .catch(() => {});
@@ -79,7 +97,7 @@ export default function Gallery() {
 
                     {/* Filter chips */}
                     <div className="flex flex-wrap justify-center gap-2">
-                        {EVENT_FILTERS.map(filter => (
+                        {eventFilters.map(filter => (
                             <motion.button
                                 key={filter}
                                 whileTap={{ scale: 0.95 }}

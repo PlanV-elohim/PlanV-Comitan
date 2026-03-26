@@ -4,7 +4,15 @@ import { UploadCloud, Trash2, CheckCircle2, Loader2, ImageIcon, Star } from 'luc
 import { supabaseApi, uploadToStorage } from '../../lib/api';
 import { useToast } from '../../components/ui/Toast';
 
-type GalleryImage = { id: string; type: string; image_url: string; is_active: boolean; created_at: string };
+type GalleryImage = { 
+    id: string; 
+    type: string; 
+    image_url: string; 
+    is_active: boolean; 
+    created_at: string;
+    camp_id?: string;
+    caption?: string; 
+};
 
 function UploadZone({
     label, accept, onUpload, uploading
@@ -51,6 +59,8 @@ export default function GalleryManager() {
     const [loadingGallery, setLoadingGallery] = useState(true);
     const [uploadingHero, setUploadingHero] = useState(false);
     const [uploadingGallery, setUploadingGallery] = useState(false);
+    const [camps, setCamps] = useState<any[]>([]);
+    const [selectedCampId, setSelectedCampId] = useState<string>('');
     const { showToast } = useToast();
 
     const [uploadingHeroText, setUploadingHeroText] = useState(false);
@@ -67,9 +77,13 @@ export default function GalleryManager() {
             .finally(() => setLoadingHero(false));
 
         supabaseApi.gallery.getAll('gallery')
-            .then(d => setGalleryImages(d))
+            .then((d: GalleryImage[]) => setGalleryImages(d))
             .catch(console.error)
             .finally(() => setLoadingGallery(false));
+
+        supabaseApi.camps.getAll()
+            .then((data: any[]) => setCamps(data))
+            .catch(console.error);
     }, []);
 
     const handleHeroUpload = async (files: FileList) => {
@@ -114,10 +128,15 @@ export default function GalleryManager() {
             for (const file of Array.from(files)) {
                 const path = `gallery/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
                 const url = await uploadToStorage('gallery', path, file);
-                const res = await supabaseApi.gallery.create({ type: 'gallery', image_url: url });
+                const res = await supabaseApi.gallery.create({ 
+                    type: 'gallery', 
+                    image_url: url,
+                    camp_id: selectedCampId || null 
+                });
                 const created = Array.isArray(res) ? res[0] : res;
                 setGalleryImages(prev => [created, ...prev]);
             }
+            showToast('Fotos subidas correctamente', 'success');
         } catch (e: any) {
             showToast('Error al subir: ' + e.message, 'error');
         } finally {
@@ -273,12 +292,29 @@ export default function GalleryManager() {
                         <p className="text-sm text-gray-500">Fotos que aparecen en la sección de galería de la web.</p>
                     </div>
 
-                    <UploadZone
-                        label="Subir fotos (puedes seleccionar varias)"
-                        accept="image/*"
-                        onUpload={handleGalleryUpload}
-                        uploading={uploadingGallery}
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div className="flex-1 w-full">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block ml-1">Asociar a Campamento</label>
+                            <select 
+                                value={selectedCampId} 
+                                onChange={(e) => setSelectedCampId(e.target.value)}
+                                className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-primary"
+                            >
+                                <option value="">General / Sin Campamento</option>
+                                {camps.map(camp => (
+                                    <option key={camp.id} value={camp.id}>{camp.title}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex-1 w-full">
+                            <UploadZone
+                                label="Subir fotos"
+                                accept="image/*"
+                                onUpload={handleGalleryUpload}
+                                uploading={uploadingGallery}
+                            />
+                        </div>
+                    </div>
 
                     {loadingGallery ? (
                         <div className="flex justify-center py-8">
@@ -290,28 +326,51 @@ export default function GalleryManager() {
                             <p className="text-sm">Aún no hay fotos en la galería</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-3 gap-3">
-                            <AnimatePresence>
-                                {galleryImages.map(img => (
-                                    <motion.div
-                                        key={img.id}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        className="relative aspect-square rounded-xl overflow-hidden group"
-                                    >
-                                        <img src={img.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <button
-                                                onClick={() => handleDelete(img)}
-                                                className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors hover:scale-110"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                        <div className="space-y-10">
+                            {/* Group gallery images by camp */}
+                            {(() => {
+                                const groups: Record<string, GalleryImage[]> = { 'Generales': [] };
+                                galleryImages.forEach(img => {
+                                    const camp = camps.find(c => c.id === img.camp_id);
+                                    const key = camp ? camp.title : 'Generales';
+                                    if (!groups[key]) groups[key] = [];
+                                    groups[key].push(img);
+                                });
+
+                                return Object.entries(groups)
+                                    .filter(([_, images]) => images.length > 0)
+                                    .map(([title, images]) => (
+                                        <div key={title} className="space-y-4">
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                                {title}
+                                            </h3>
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                                <AnimatePresence>
+                                                    {images.map(img => (
+                                                        <motion.div
+                                                            key={img.id}
+                                                            initial={{ opacity: 0, scale: 0.9 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.9 }}
+                                                            className="relative aspect-square rounded-xl overflow-hidden group shadow-sm"
+                                                        >
+                                                            <img src={img.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <button
+                                                                    onClick={() => handleDelete(img)}
+                                                                    className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors hover:scale-110"
+                                                                >
+                                                                    <Trash2 className="w-5 h-5" />
+                                                                </button>
+                                                            </div>
+                                                        </motion.div>
+                                                    ))}
+                                                </AnimatePresence>
+                                            </div>
                                         </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
+                                    ));
+                            })()}
                         </div>
                     )}
                 </section>

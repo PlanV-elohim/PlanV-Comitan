@@ -10,20 +10,17 @@ interface BeforeInstallPromptEvent extends Event {
 export default function PWAInstallPrompt() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [show, setShow] = useState(false);
-    const [dismissed, setDismissed] = useState(() => !!localStorage.getItem('pwa-install-dismissed'));
 
     useEffect(() => {
         const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
-            if (!dismissed) {
-                // Delay showing so it doesn't appear immediately on load
-                setTimeout(() => setShow(true), 4000);
-            }
+            // Delay showing so it doesn't appear immediately on load
+            setTimeout(() => setShow(true), 4000);
         };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, [dismissed]);
+    }, []);
 
     const handleInstall = async () => {
         if (!deferredPrompt) return;
@@ -37,8 +34,6 @@ export default function PWAInstallPrompt() {
 
     const handleDismiss = () => {
         setShow(false);
-        setDismissed(true);
-        localStorage.setItem('pwa-install-dismissed', '1');
     };
 
     return (
