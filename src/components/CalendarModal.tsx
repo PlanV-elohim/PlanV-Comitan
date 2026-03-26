@@ -30,7 +30,7 @@ export default function CalendarModal({ onClose, onRegister }: CalendarModalProp
     useEffect(() => {
         let isMounted = true;
         import('../lib/api').then(({ supabaseApi }) => {
-            supabaseApi.camps.getAll().then(data => {
+            supabaseApi.camps.getAll().then((data: any[]) => {
                 if (!isMounted) return;
                 setEvents(data.filter((c: any) => c.status !== 'history'));
             });

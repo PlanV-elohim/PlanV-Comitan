@@ -286,159 +286,194 @@ export default function RegistrationsManager() {
                         <p>No hay registros que coincidan con tu búsqueda.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                        <div className="hidden sm:grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] px-6 py-3 bg-gray-50 dark:bg-gray-800/50 text-xs font-bold uppercase tracking-wider text-gray-500">
-                            <span>{viewMode === 'reservations' ? 'Responsable' : 'Acampante'}</span>
-                            <span>Campamento</span>
-                            <span>{viewMode === 'reservations' ? 'Asientos' : 'Rol'}</span>
-                            <span>Logística</span>
-                            <span>Fecha</span>
-                            <span></span>
-                        </div>
-
-                        {viewMode === 'reservations' ? (
-                            filtered.map((reg, i) => {
-                                const regMembers = members.filter(m => m.registration_id === reg.id);
-                                return (
-                                    <motion.div
-                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                                        key={reg.id}
-                                        onClick={() => setSelectedReg(reg)}
-                                        className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] items-start sm:items-center gap-2 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group transition-colors"
-                                    >
-                                        <div>
-                                            <p className="font-semibold dark:text-white flex items-center gap-2">
-                                                {reg.responsable_name} {reg.responsable_lastname}
-                                                {reg.reg_type === 'group' && <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Líder</span>}
-                                            </p>
-                                            <p className="text-sm text-gray-500">{reg.responsable_email}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-sm dark:text-gray-300">{getCampName(reg.camp_id)}</p>
-                                            <p className="text-[10px] text-gray-500 flex items-center gap-1 uppercase tracking-wider"><Calendar className="w-3 h-3" />{getCampDate(reg.camp_id)}</p>
-                                        </div>
-                                        <div className="hidden sm:block">
-                                            <div className="flex flex-col">
-                                                <span className="text-xl font-black dark:text-white">{reg.group_size || 1}</span>
-                                                {reg.reg_type === 'group' && (
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase">{regMembers.length} reg. / {reg.group_size} total</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                            {reg.check_in_status ? (
-                                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    <CheckCircle2 className="w-3 h-3" /> Checked-In
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    Pendiente Check-In
-                                                </span>
-                                            )}
-                                            {reg.payment_status === 'paid' ? (
-                                                <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    ✅ Pagado
-                                                </span>
-                                            ) : reg.payment_status === 'cancelled' ? (
-                                                <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    ❌ Cancelado
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    ⚠️ Debe
-                                                </span>
-                                            )}
-                                            {reg.medical_cleared ? (
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); openMedicalForm(reg.id); }}
-                                                    className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase hover:bg-blue-100 transition-colors"
-                                                >
-                                                    <HeartPulse className="w-3 h-3" /> Ficha Médica ✓
-                                                </button>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    <ShieldAlert className="w-3 h-3" /> Sin Ficha
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-500 hidden sm:block">{new Date(reg.created_at).toLocaleDateString('es-MX')}</p>
-                                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors hidden sm:block justify-self-end" />
-                                    </motion.div>
-                                );
-                            })
-                        ) : (
-                            // Individuals list (including companions)
-                            (() => {
-                                const allIndividuals: any[] = [];
+                    <div className="flex flex-col gap-8 p-4 sm:p-6 bg-gray-50 dark:bg-gray-900/50">
+                        {(() => {
+                            const groupedByCamp: Record<string, any[]> = {};
+                            
+                            if (viewMode === 'reservations') {
+                                filtered.forEach(r => {
+                                    if (!groupedByCamp[r.camp_id]) groupedByCamp[r.camp_id] = [];
+                                    groupedByCamp[r.camp_id].push(r);
+                                });
+                            } else {
                                 filtered.forEach(r => {
                                     // Holder
-                                    allIndividuals.push({ ...r, is_holder: true, full_name: `${r.responsable_name} ${r.responsable_lastname}` });
+                                    if (!groupedByCamp[r.camp_id]) groupedByCamp[r.camp_id] = [];
+                                    groupedByCamp[r.camp_id].push({ ...r, is_holder: true, full_name: `${r.responsable_name} ${r.responsable_lastname}` });
                                     // Companions
                                     const rMembers = members.filter(m => m.registration_id === r.id);
                                     rMembers.forEach(m => {
-                                        allIndividuals.push({ ...m, is_holder: false, registration: r, full_name: `${m.first_name} ${m.last_name}`, camp_id: r.camp_id });
+                                        groupedByCamp[r.camp_id].push({ ...m, is_holder: false, registration: r, full_name: `${m.first_name} ${m.last_name}`, camp_id: r.camp_id });
                                     });
                                 });
+                            }
 
-                                return allIndividuals.map((person, i) => (
-                                    <motion.div
-                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.01 }}
-                                        key={person.id + (person.is_holder ? '-h' : '-m')}
-                                        onClick={() => person.is_holder ? setSelectedReg(person) : setSelectedReg(person.registration)}
-                                        className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] items-start sm:items-center gap-2 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group transition-colors"
-                                    >
-                                        <div>
-                                            <p className="font-semibold dark:text-white flex items-center gap-2">
-                                                {person.full_name}
-                                                {person.is_holder ? (
-                                                    <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Responsable</span>
-                                                ) : (
-                                                    <span className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Acompañante</span>
-                                                )}
-                                            </p>
-                                            <p className="text-xs text-gray-400">{person.is_holder ? person.responsable_email : `De: ${person.registration.responsable_name}`}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-sm dark:text-gray-300">{getCampName(person.camp_id)}</p>
-                                        </div>
-                                        <div className="hidden sm:block">
-                                            <span className="text-xs font-bold uppercase tracking-tighter text-gray-500">
-                                                {person.is_holder ? 'TITULAR' : 'GRUPO'}
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                            <div className="flex items-center gap-2">
-                                                {person.check_in_status ? (
-                                                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                        <CheckCircle2 className="w-3 h-3" /> ADENTRO
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                        Fuera
-                                                    </span>
-                                                )}
+                            return Object.entries(groupedByCamp).map(([campId, items]) => {
+                                const cId = Number(campId);
+                                const totalItems = items.length;
+                                const paidCount = viewMode === 'reservations' ? items.filter(i => i.payment_status === 'paid').length : 0;
+                                const totalSpotsGroup = viewMode === 'reservations' ? items.reduce((acc, i) => acc + (i.group_size || 1), 0) : totalItems;
+
+                                return (
+                                    <div key={campId} className="bg-white dark:bg-gray-800/40 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+                                        {/* Group Header */}
+                                        <div className="bg-gradient-to-r from-gray-100 to-white dark:from-gray-800 dark:to-gray-800/50 px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-800">
+                                            <div>
+                                                <h3 className="text-xl font-black dark:text-white flex items-center gap-2">🏕️ {getCampName(cId)}</h3>
+                                                <p className="text-xs font-semibold text-gray-500 mt-1 flex items-center gap-1 uppercase tracking-widest"><Calendar className="w-3.5 h-3.5"/> {getCampDate(cId)}</p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                {person.medical_cleared ? (
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); openMedicalForm(person.registration?.id || person.id, person.is_holder ? undefined : person.id); }}
-                                                        className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 dark:bg-blue-900/10 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase hover:bg-blue-100 transition-colors"
-                                                    >
-                                                        <HeartPulse className="w-3 h-3" /> Ficha OK ✓
-                                                    </button>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 dark:bg-red-900/10 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                        <ShieldAlert className="w-3 h-3" /> Sin Ficha
-                                                    </span>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="text-xs font-bold bg-white dark:bg-gray-700 px-3 py-1.5 rounded-full text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-600 flex items-center gap-1.5">{viewMode === 'reservations' ? <Hash className="w-3.5 h-3.5"/> : <Users className="w-3.5 h-3.5"/>} {viewMode === 'reservations' ? `${totalItems} Reservas (${totalSpotsGroup} Personas)` : `${totalItems} Personas`}</span>
+                                                {viewMode === 'reservations' && (
+                                                    <span className="text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-3 py-1.5 rounded-full shadow-sm border border-green-200 dark:border-green-800 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5"/> {paidCount} Pagados completos</span>
                                                 )}
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-500 hidden sm:block">{new Date(person.created_at).toLocaleDateString('es-MX')}</p>
-                                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary transition-colors hidden sm:block justify-self-end" />
-                                    </motion.div>
-                                ));
-                            })()
-                        )}
+
+                                        {/* Desktop Column Headers */}
+                                        <div className="hidden sm:grid grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr_auto] px-6 py-3 bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                                            <span>{viewMode === 'reservations' ? 'Titular' : 'Acampante'}</span>
+                                            <span>{viewMode === 'reservations' ? 'Asientos' : 'Rol'}</span>
+                                            <span>{viewMode === 'reservations' ? 'Pago' : 'Cabaña'}</span>
+                                            <span>Salud / Check-In</span>
+                                            <span>Fecha Reg.</span>
+                                            <span></span>
+                                        </div>
+
+                                        {/* Rows */}
+                                        <div className="divide-y divide-gray-100 dark:divide-gray-800/50">
+                                            {items.map((item, i) => {
+                                                if (viewMode === 'reservations') {
+                                                    const reg = item;
+                                                    const regMembers = members.filter(m => m.registration_id === reg.id);
+                                                    return (
+                                                        <motion.div
+                                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                                                            key={reg.id}
+                                                            onClick={() => setSelectedReg(reg)}
+                                                            className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr_auto] items-start sm:items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors"
+                                                        >
+                                                            <div>
+                                                                <p className="font-bold dark:text-white flex items-center gap-2">
+                                                                    {reg.responsable_name} {reg.responsable_lastname}
+                                                                    {reg.reg_type === 'group' && <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Líder</span>}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{reg.responsable_email} • {reg.responsable_phone}</p>
+                                                            </div>
+                                                            <div className="hidden sm:block">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xl font-black dark:text-white leading-none">{reg.group_size || 1}</span>
+                                                                    {reg.reg_type === 'group' && (
+                                                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">{regMembers.length} / {reg.group_size}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="w-full sm:w-auto">
+                                                                {reg.payment_status === 'paid' ? (
+                                                                    <span className="inline-flex items-center gap-1.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                                                                        ✅ Liquidado
+                                                                    </span>
+                                                                ) : reg.payment_status === 'cancelled' ? (
+                                                                    <span className="inline-flex items-center gap-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                                                                        ❌ Cancelado
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                                                                        ⚠️ Pendiente
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                                                {reg.medical_cleared ? (
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); openMedicalForm(reg.id); }}
+                                                                        className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:underline"
+                                                                    >
+                                                                        <HeartPulse className="w-3.5 h-3.5" /> Ficha OK
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1.5 text-red-500 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                                                                        <ShieldAlert className="w-3.5 h-3.5" /> Ficha Faltante
+                                                                    </span>
+                                                                )}
+                                                                {reg.check_in_status ? (
+                                                                    <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider">
+                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Check-in listo
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-wider">
+                                                                        Check-in  pendiente
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 hidden sm:block font-semibold">{new Date(reg.created_at).toLocaleDateString('es-MX')}</p>
+                                                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors hidden sm:block justify-self-end" />
+                                                        </motion.div>
+                                                    );
+                                                } else {
+                                                    const person = item;
+                                                    return (
+                                                        <motion.div
+                                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.01 }}
+                                                            key={person.id + (person.is_holder ? '-h' : '-m')}
+                                                            onClick={() => person.is_holder ? setSelectedReg(person) : setSelectedReg(person.registration)}
+                                                            className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr_auto] items-start sm:items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors"
+                                                        >
+                                                            <div>
+                                                                <p className="font-bold dark:text-white flex items-center gap-2">
+                                                                    {person.full_name}
+                                                                    {person.is_holder ? (
+                                                                        <span className="bg-primary/10 text-primary text-[9px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Resp.</span>
+                                                                    ) : (
+                                                                        <span className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 text-[9px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Grupo</span>
+                                                                    )}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 mt-0.5">{person.is_holder ? person.responsable_email : `Grupo: ${person.registration.responsable_name}`}</p>
+                                                            </div>
+                                                            <div className="hidden sm:block">
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                                                    {person.is_holder ? 'TITULAR' : 'ACOMPAÑANTE'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="w-full sm:w-auto">
+                                                                <span className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider max-w-[120px] truncate">
+                                                                    <Home className="w-3.5 h-3.5 shrink-0" /> {getCabinName(person.cabin_id)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                                                {person.medical_cleared ? (
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); openMedicalForm(person.registration?.id || person.id, person.is_holder ? undefined : person.id); }}
+                                                                        className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider hover:underline"
+                                                                    >
+                                                                        <HeartPulse className="w-3.5 h-3.5" /> Ficha OK
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1.5 text-red-500 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                                                                        <ShieldAlert className="w-3.5 h-3.5" /> Ficha Faltante
+                                                                    </span>
+                                                                )}
+                                                                {person.check_in_status ? (
+                                                                    <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider">
+                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Check-in listo
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-wider">
+                                                                        Check-in  pendiente
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 hidden sm:block font-semibold">{new Date(person.created_at).toLocaleDateString('es-MX')}</p>
+                                                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors hidden sm:block justify-self-end" />
+                                                        </motion.div>
+                                                    );
+                                                }
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            });
+                        })()}
                     </div>
                 )}
             </div>

@@ -9,7 +9,7 @@ export default function Countdown() {
 
     useEffect(() => {
         let isMounted = true;
-        supabaseApi.camps.getAll().then(data => {
+        supabaseApi.camps.getAll().then((data: any[]) => {
             if (!isMounted) return;
             const now = new Date();
             // Try to find an upcoming camp based on parsed date
