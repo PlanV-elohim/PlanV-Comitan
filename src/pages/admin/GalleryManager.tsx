@@ -351,17 +351,36 @@ export default function GalleryManager() {
                                 const groups: Record<string, GalleryImage[]> = { 'Generales': [] };
                                 galleryImages.forEach(img => {
                                     let key = 'Generales';
+                                    let match = false;
+                                    const [targetType, targetId] = selectedTarget.split(':');
+
                                     if (img.camp_id) {
                                         const camp = camps.find(c => c.id === img.camp_id);
-                                        if (camp) key = camp.title;
+                                        if (camp) {
+                                            key = camp.title;
+                                            if (targetType === 'camp' && targetId === img.camp_id) match = true;
+                                        }
                                     } else if (img.timeline_id) {
                                         const timeline = timelineEvents.find(t => t.id === img.timeline_id);
-                                        if (timeline) key = `Historia: ${timeline.title}`;
+                                        if (timeline) {
+                                            key = `Historia: ${timeline.title}`;
+                                            if (targetType === 'timeline' && targetId === img.timeline_id) match = true;
+                                        }
+                                    } else {
+                                        if (!selectedTarget) match = true;
                                     }
                                     
+                                    // If a target is selected, only keep matching ones
+                                    if (selectedTarget && !match) return;
+
                                     if (!groups[key]) groups[key] = [];
                                     groups[key].push(img);
                                 });
+
+                                // Remove empty groups if filtering
+                                if (selectedTarget && Object.keys(groups).length > 1) {
+                                    delete groups['Generales'];
+                                }
 
                                 return Object.entries(groups)
                                     .filter(([_, images]) => images.length > 0)
