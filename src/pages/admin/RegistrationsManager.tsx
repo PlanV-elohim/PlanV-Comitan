@@ -183,7 +183,7 @@ export default function RegistrationsManager() {
                     if (groupList.length === 0) return;
                     let assignedCabin = campCabins.find(c => 
                         (c.capacity - (occupation[c.id] || 0)) >= groupList.length && 
-                        (c.gender === reqGender || c.gender === 'mixed' || !c.gender)
+                        (c.gender === reqGender || reqGender === 'mixed' || c.gender === 'mixed' || !c.gender)
                     );
 
                     // fallback: if no single cabin fits the whole subgroup, assign them individually
@@ -191,7 +191,7 @@ export default function RegistrationsManager() {
                         for (const p of groupList) {
                             let indivCabin = campCabins.find(c => 
                                 (c.capacity - (occupation[c.id] || 0)) >= 1 && 
-                                (c.gender === reqGender || c.gender === 'mixed' || !c.gender)
+                                (c.gender === reqGender || reqGender === 'mixed' || c.gender === 'mixed' || !c.gender)
                             );
                             if (indivCabin) {
                                 if (p.type === 'reg') updatesReg.push({ id: p.id, cabin_id: indivCabin.id });
