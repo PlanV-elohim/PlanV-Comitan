@@ -5,7 +5,7 @@
 create extension if not exists "uuid-ossp";
 
 /* ==============================================
- * 1. TABLAS PRINCIPALES
+ * TABLAS PRINCIPALES
  * ============================================== */
 
 -- Campamentos
@@ -30,14 +30,14 @@ create table if not exists public.registrations (
   full_name text not null,
   email text not null,
   phone text not null,
-  gender text, 
+  gender text, -- Added in migration
   payment_status text default 'pending',
   amount_paid numeric default 0,
   total_amount numeric not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Miembros de Grupo
+-- Miembros de Grupo (Renombrado de companions)
 create table if not exists public.group_members (
   id uuid default uuid_generate_v4() primary key,
   registration_id uuid references public.registrations(id) on delete cascade not null,
@@ -45,7 +45,7 @@ create table if not exists public.group_members (
   last_name text not null,
   age int not null,
   phone text,
-  gender text,
+  gender text, -- Added in migration
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -65,12 +65,12 @@ create table if not exists public.itinerary_events (
 create table if not exists public.timeline_events (
   id uuid default uuid_generate_v4() primary key,
   year text not null,
-  date_string text,
+  date_string text, -- Added in migration
   title text not null,
   location text not null,
   description text not null,
   image_url text not null,
-  sort_order int default 0 not null,
+  sort_order int default 0 not null, -- Added in migration
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -79,8 +79,8 @@ create table if not exists public.gallery_images (
   id uuid default uuid_generate_v4() primary key,
   type text not null, -- 'hero_bg', 'hero_bg_text', 'hero_mobile', 'hero_mobile_text', 'gallery'
   image_url text not null,
-  camp_id uuid references public.camps(id) on delete set null,
-  caption text,
+  camp_id uuid references public.camps(id) on delete set null, -- Added in migration
+  caption text, -- Added in migration
   is_active boolean default true not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -97,7 +97,7 @@ create table if not exists public.contact_messages (
 );
 
 /* ==============================================
- * 2. MIGRACIONES DE COLUMNAS (Para tablas ya existentes)
+ * MIGRACIONES DE COLUMNAS (Para tablas ya existentes)
  * ============================================== */
 
 DO $$ 
@@ -130,7 +130,7 @@ BEGIN
 END $$;
 
 /* ==============================================
- * 3. SEGURIDAD (Row Level Security - RLS)
+ * SEGURIDAD (RLS)
  * ============================================== */
 
 -- Habilitar RLS en todas
@@ -164,7 +164,7 @@ create policy "Public_Insert_Group_Members" on public.group_members for insert t
 drop policy if exists "Public_Insert_Contact" on public.contact_messages;
 create policy "Public_Insert_Contact" on public.contact_messages for insert to public with check (true);
 
--- POLÍTICAS ADMINISTRADOR
+-- POLÍTICAS ADMIN (Solo autenticados)
 drop policy if exists "Admin_All_Camps" on public.camps;
 create policy "Admin_All_Camps" on public.camps for all to authenticated using (true);
 
