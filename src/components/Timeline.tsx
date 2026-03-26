@@ -85,14 +85,14 @@ export default function Timeline() {
 
   useEffect(() => {
     supabaseApi.timeline.getAll()
-      .then(data => setEvents(data))
-      .catch(err => console.error("Error loading timeline:", err));
+      .then((data: any[]) => setEvents(data))
+      .catch((err: Error) => console.error("Error loading timeline:", err));
   }, []);
 
   if (events.length === 0) return null;
 
   return (
-    <section id="historia" className="py-24 md:py-32 relative bg-gray-50 dark:bg-gray-950/50 overflow-hidden transition-colors duration-300">
+    <section id="historia" className="py-20 md:py-32 relative bg-gray-50 dark:bg-gray-950/50 overflow-hidden transition-colors duration-300">
       
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-[radial-gradient(ellipse_at_center,_var(--color-primary)_0%,_transparent_70%)] opacity-5 -translate-x-1/2 pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[radial-gradient(ellipse_at_center,_#3b82f6_0%,_transparent_70%)] opacity-5 translate-x-1/2 pointer-events-none" />

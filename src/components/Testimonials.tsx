@@ -80,7 +80,7 @@ export default function Testimonials() {
     const t = testimonials[current];
 
     return (
-        <section className="py-24 bg-white dark:bg-gray-950 px-6">
+        <section className="py-20 md:py-24 bg-white dark:bg-gray-950 px-6">
             <div className="max-w-4xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

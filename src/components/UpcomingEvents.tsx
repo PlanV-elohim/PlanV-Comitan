@@ -80,7 +80,7 @@ export default function UpcomingEvents({ onRegister, onOpenCalendar, onInfo }: U
     }, [user, loading, camps.length]);
 
     return (
-        <section id="campamentos" className="py-24 bg-gray-50 px-6">
+        <section id="campamentos" className="py-20 md:py-24 bg-gray-50 px-6">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
                     <motion.div

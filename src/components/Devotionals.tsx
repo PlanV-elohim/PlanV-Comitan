@@ -36,7 +36,7 @@ const DEVOTIONALS = [
 
 export default function Devotionals() {
     return (
-        <section id="devocionales" className="py-24 bg-white dark:bg-gray-950 px-6">
+        <section id="devocionales" className="py-20 md:py-24 bg-white dark:bg-gray-950 px-6">
             <div className="max-w-7xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

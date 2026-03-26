@@ -59,7 +59,7 @@ export default function Gallery() {
     }, [selectedImage, filteredImages.length]);
 
     return (
-        <section className="py-24 bg-gray-50 dark:bg-gray-950 px-6">
+        <section className="py-20 md:py-24 bg-gray-50 dark:bg-gray-950 px-6">
             <div className="max-w-7xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
