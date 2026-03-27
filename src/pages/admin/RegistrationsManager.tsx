@@ -65,9 +65,8 @@ export default function RegistrationsManager() {
         // Cabin filter: check holder or any group member
         let matchCabin = true;
         if (selectedCabinFilter !== 'all') {
-            const cabinId = Number(selectedCabinFilter);
-            const holderMatch = r.cabin_id === cabinId;
-            const memberMatch = members.some(m => m.registration_id === r.id && m.cabin_id === cabinId);
+            const holderMatch = String(r.cabin_id) === selectedCabinFilter;
+            const memberMatch = members.some(m => m.registration_id === r.id && String(m.cabin_id) === selectedCabinFilter);
             matchCabin = holderMatch || memberMatch;
         }
         return matchSearch && matchCamp && matchPayment && matchCabin;
@@ -350,10 +349,9 @@ export default function RegistrationsManager() {
 
             {/* Cabin Summary Panel */}
             {selectedCabinFilter !== 'all' && (() => {
-                const cabinId = Number(selectedCabinFilter);
-                const cabin = cabins.find(c => c.id === cabinId);
-                const holders = registrations.filter(r => r.cabin_id === cabinId);
-                const mems = members.filter(m => m.cabin_id === cabinId);
+                const cabin = cabins.find(c => String(c.id) === selectedCabinFilter);
+                const holders = registrations.filter(r => String(r.cabin_id) === selectedCabinFilter);
+                const mems = members.filter(m => String(m.cabin_id) === selectedCabinFilter);
                 const total = holders.length + mems.length;
                 return (
                     <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/20 rounded-3xl p-6">
