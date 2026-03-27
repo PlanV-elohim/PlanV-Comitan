@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Search, X, Phone, Mail, MapPin, Calendar, User, Church, Hash, ChevronRight, Download, CheckCircle2, ShieldAlert, HeartPulse, Home } from 'lucide-react';
+import { Users, Search, X, Phone, Mail, MapPin, Calendar, User, Church, Hash, ChevronRight, Download, CheckCircle2, ShieldAlert, HeartPulse, Home, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { supabaseApi } from '../../lib/api';
 
@@ -20,6 +20,11 @@ export default function RegistrationsManager() {
     const [medicalFormData, setMedicalFormData] = useState<any | null>(null);
     const [loadingMedical, setLoadingMedical] = useState(false);
     const [selectedCabinFilter, setSelectedCabinFilter] = useState('all');
+    // Multi-selection & Filter state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [bulkUpdating, setBulkUpdating] = useState(false);
+    const [showOnlyMissingMedical, setShowOnlyMissingMedical] = useState(false);
+    const [showOnlyNotCheckedIn, setShowOnlyNotCheckedIn] = useState(false);
 
     useEffect(() => { loadData(); }, []);
 
@@ -69,7 +74,9 @@ export default function RegistrationsManager() {
             const memberMatch = members.some(m => m.registration_id === r.id && String(m.cabin_id) === selectedCabinFilter);
             matchCabin = holderMatch || memberMatch;
         }
-        return matchSearch && matchCamp && matchPayment && matchCabin;
+        const matchMedical = !showOnlyMissingMedical || !r.medical_cleared;
+        const matchCheckin = !showOnlyNotCheckedIn || r.check_in_status;
+        return matchSearch && matchCamp && matchPayment && matchCabin && matchMedical && matchCheckin;
     });
 
     const totalSpots = filtered.reduce((acc, r) => acc + (r.group_size || 1), 0);
@@ -130,6 +137,35 @@ export default function RegistrationsManager() {
         link.href = URL.createObjectURL(blob);
         link.download = `reservaciones_${Date.now()}.csv`;
         link.click();
+    };
+
+    // Print roster for selected camp/cabin
+    const printRoster = () => {
+        const campName = selectedCampFilter !== 'all' ? (camps.find((c: any) => String(c.id) === selectedCampFilter)?.title || 'Todos') : 'Todos los campamentos';
+        const cabinName = selectedCabinFilter !== 'all' ? (cabins.find((c: any) => String(c.id) === selectedCabinFilter)?.name || '') : '';
+        const rows: string[] = [];
+        filtered.forEach(r => {
+            rows.push(`<tr style="border-bottom:1px solid #eee"><td style="padding:8px 12px">${r.responsable_name} ${r.responsable_lastname}</td><td style="padding:8px 12px">${r.responsable_phone || '-'}</td><td style="padding:8px 12px">${r.gender === 'male' ? '👨 Hombre' : r.gender === 'female' ? '👩 Mujer' : '-'}</td><td style="padding:8px 12px">${getCabinName(r.cabin_id)}</td><td style="padding:8px 12px">${r.payment_status === 'paid' ? '✅ Pagado' : '⚠️ Pendiente'}</td><td style="padding:8px 12px">${r.check_in_status ? '✓' : '—'}</td></tr>`);
+            if (r.reg_type === 'group') {
+                members.filter(m => m.registration_id === r.id).forEach(m => {
+                    rows.push(`<tr style="background:#fafafa;border-bottom:1px solid #eee"><td style="padding:6px 12px 6px 28px;color:#555">&nbsp;↳ ${m.first_name} ${m.last_name}</td><td></td><td style="padding:6px 12px">${m.gender === 'male' ? '👨 Hombre' : m.gender === 'female' ? '👩 Mujer' : '-'}</td><td style="padding:6px 12px">${getCabinName(m.cabin_id)}</td><td style="padding:6px 12px">—</td><td style="padding:6px 12px">${m.check_in_status ? '✓' : '—'}</td></tr>`);
+                });
+            }
+        });
+        const html = `<!DOCTYPE html><html><head><title>Lista ${campName}${cabinName ? ' – ' + cabinName : ''}</title><style>body{font-family:sans-serif;padding:24px}h1{font-size:22px;margin-bottom:4px}p{color:#666;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{text-align:left;padding:8px 12px;background:#f3f4f6;font-size:12px;text-transform:uppercase;color:#374151}@media print{body{padding:0}}</style></head><body><h1>${campName}</h1><p>${cabinName || 'Todos los espacios'} · ${filtered.length} registros · Impreso ${new Date().toLocaleDateString('es-MX')}</p><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Género</th><th>Cabaña</th><th>Pago</th><th>Check-in</th></tr></thead><tbody>${rows.join('')}</tbody></table></body></html>`;
+        const w = window.open('', '_blank');
+        if (w) { w.document.write(html); w.document.close(); w.print(); }
+    };
+
+    // Bulk payment update
+    const bulkMarkPaid = async () => {
+        if (selectedIds.size === 0) return;
+        setBulkUpdating(true);
+        try {
+            await Promise.all([...selectedIds].map(id => supabaseApi.registrations.update(id, { payment_status: 'paid' })));
+            setRegistrations(registrations.map(r => selectedIds.has(r.id) ? { ...r, payment_status: 'paid' } : r));
+            setSelectedIds(new Set());
+        } finally { setBulkUpdating(false); }
     };
 
     const runMagicAssignment = async () => {
@@ -267,8 +303,11 @@ export default function RegistrationsManager() {
                         {magicAssigning ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>🪄</span>} 
                         {magicAssigning ? 'Asignando...' : 'Asignación Mágica'}
                     </button>
-                    <button onClick={exportCSV} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
-                        <Download className="w-4 h-4" /> Exportar CSV
+                    <button onClick={printRoster} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
+                        <Printer className="w-4 h-4" /> Imprimir Lista
+                    </button>
+                    <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
+                        <Download className="w-4 h-4" /> CSV
                     </button>
                 </div>
             </header>
@@ -278,6 +317,8 @@ export default function RegistrationsManager() {
                 {[
                     { label: 'Total Inscritos', value: filtered.length, icon: Users, color: 'text-primary bg-primary/10' },
                     { label: 'Total Cupos', value: totalSpots, icon: Hash, color: 'text-green-600 bg-green-100 dark:bg-green-900/30' },
+                    { label: 'Sin Ficha Médica', value: registrations.filter(r => !r.medical_cleared).length, icon: ShieldAlert, color: 'text-red-600 bg-red-100 dark:bg-red-900/30' },
+                    { label: 'Pagos Pendientes', value: registrations.filter(r => r.payment_status !== 'paid').length, icon: AlertTriangle, color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30' },
                     { label: 'Grupales', value: filtered.filter(r => r.reg_type === 'group').length, icon: User, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' },
                     { label: 'De Iglesia', value: filtered.filter(r => r.is_from_church).length, icon: Church, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30' },
                 ].map(s => (
@@ -292,6 +333,17 @@ export default function RegistrationsManager() {
                     </div>
                 ))}
             </div>
+
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 bg-primary/10 border border-primary/20 rounded-2xl px-5 py-3">
+                    <span className="font-bold text-primary">{selectedIds.size} seleccionados</span>
+                    <button onClick={bulkMarkPaid} disabled={bulkUpdating} className="flex items-center gap-2 bg-green-600 text-white px-4 py-1.5 rounded-xl text-sm font-bold hover:bg-green-700 transition-colors disabled:opacity-50">
+                        <CheckCircle2 className="w-4 h-4" /> {bulkUpdating ? 'Guardando...' : 'Marcar como Pagados'}
+                    </button>
+                    <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-gray-400 hover:text-gray-700 dark:hover:text-white text-sm font-medium">Cancelar</button>
+                </motion.div>
+            )}
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -347,12 +399,29 @@ export default function RegistrationsManager() {
                 </div>
             </div>
 
+            {/* Quick Filters */}
+            <div className="flex flex-wrap gap-2">
+                <button onClick={() => setShowOnlyMissingMedical(v => !v)} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${showOnlyMissingMedical ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-red-300'}`}>
+                    <ShieldAlert className="w-3.5 h-3.5" /> Sin Ficha Médica {showOnlyMissingMedical && `(${filtered.length})`}
+                </button>
+                <button onClick={() => setShowOnlyNotCheckedIn(v => !v)} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${showOnlyNotCheckedIn ? 'bg-green-600 text-white border-green-600' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-green-300'}`}>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Check-in Pendiente {showOnlyNotCheckedIn && `(${filtered.length})`}
+                </button>
+                {(showOnlyMissingMedical || showOnlyNotCheckedIn) && (
+                    <button onClick={() => { setShowOnlyMissingMedical(false); setShowOnlyNotCheckedIn(false); }} className="text-xs font-medium text-gray-400 hover:text-gray-700 dark:hover:text-white px-2">
+                        ✕ Limpiar filtros
+                    </button>
+                )}
+            </div>
+
             {/* Cabin Summary Panel */}
             {selectedCabinFilter !== 'all' && (() => {
                 const cabin = cabins.find(c => String(c.id) === selectedCabinFilter);
                 const holders = registrations.filter(r => String(r.cabin_id) === selectedCabinFilter);
                 const mems = members.filter(m => String(m.cabin_id) === selectedCabinFilter);
                 const total = holders.length + mems.length;
+                const maleCount = holders.filter((r: any) => r.gender === 'male').length + mems.filter((m: any) => m.gender === 'male').length;
+                const femaleCount = holders.filter((r: any) => r.gender === 'female').length + mems.filter((m: any) => m.gender === 'female').length;
 
                 const genderIcon = (g: string) => g === 'male' ? '👨' : g === 'female' ? '👩' : '🧑';
                 const genderLabel = (g: string) => g === 'male' ? 'Hombre' : g === 'female' ? 'Mujer' : 'N/A';
@@ -369,6 +438,7 @@ export default function RegistrationsManager() {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                     <span className="font-bold text-primary">{total}</span> personas asignadas
                                     {cabin?.capacity ? ` · ${total}/${cabin.capacity} cupos` : ''}
+                                    {` · 👨 ${maleCount} · 👩 ${femaleCount}`}
                                 </p>
                             </div>
                         </div>
@@ -501,7 +571,8 @@ export default function RegistrationsManager() {
                                         </div>
 
                                         {/* Desktop Column Headers */}
-                                        <div className="hidden sm:grid grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr_auto] px-6 py-3 bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                                        <div className="hidden sm:grid grid-cols-[auto_2.5fr_1fr_1.5fr_1.5fr_1fr_auto] px-6 py-3 bg-gray-50 dark:bg-gray-900/40 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-200 dark:border-gray-800 gap-4">
+                                            <div className="w-4"></div>
                                             <span>{viewMode === 'reservations' ? 'Titular' : 'Acampante'}</span>
                                             <span>{viewMode === 'reservations' ? 'Asientos' : 'Rol'}</span>
                                             <span>{viewMode === 'reservations' ? 'Pago' : 'Cabaña'}</span>
@@ -520,10 +591,16 @@ export default function RegistrationsManager() {
                                                         <motion.div
                                                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
                                                             key={reg.id}
-                                                            onClick={() => setSelectedReg(reg)}
-                                                            className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr_auto] items-start sm:items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors"
+                                                            className="px-6 py-4 flex flex-col sm:grid sm:grid-cols-[auto_2.5fr_1fr_1.5fr_1.5fr_1fr_auto] items-start sm:items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors"
                                                         >
-                                                            <div>
+                                                            {/* Checkbox */}
+                                                            <input type="checkbox" className="w-4 h-4 rounded accent-primary cursor-pointer shrink-0" checked={selectedIds.has(reg.id)} onChange={e => {
+                                                                e.stopPropagation();
+                                                                setSelectedIds(prev => { const s = new Set(prev); e.target.checked ? s.add(reg.id) : s.delete(reg.id); return s; });
+                                                            }} onClick={e => e.stopPropagation()} />
+                                                            
+                                                            <div onClick={() => setSelectedReg(reg)} className="contents">
+                                                                <div>
                                                                 <p className="font-bold dark:text-white flex items-center gap-2">
                                                                     {reg.responsable_name} {reg.responsable_lastname}
                                                                     {reg.reg_type === 'group' && <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Líder</span>}
@@ -578,6 +655,7 @@ export default function RegistrationsManager() {
                                                             </div>
                                                             <p className="text-xs text-gray-500 hidden sm:block font-semibold">{new Date(reg.created_at).toLocaleDateString('es-MX')}</p>
                                                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors hidden sm:block justify-self-end" />
+                                                            </div>
                                                         </motion.div>
                                                     );
                                                 } else {
@@ -857,7 +935,7 @@ export default function RegistrationsManager() {
                                             setUpdatingReg(true);
                                             try {
                                                 const newStatus = !selectedReg.check_in_status;
-                                                await supabase.from('registrations').update({ check_in_status: newStatus }).eq('id', selectedReg.id);
+                                                await supabaseApi.registrations.update(selectedReg.id, { check_in_status: newStatus });
                                                 setSelectedReg({ ...selectedReg, check_in_status: newStatus });
                                                 setRegistrations(registrations.map(r => r.id === selectedReg.id ? { ...r, check_in_status: newStatus } : r));
                                             } finally { setUpdatingReg(false); }
@@ -866,8 +944,12 @@ export default function RegistrationsManager() {
                                     >
                                         <CheckCircle2 className="w-4 h-4" /> {selectedReg.check_in_status ? 'Deshacer Check-In' : 'Marcar Check-In'}
                                     </button>
-                                    <a href={`https://wa.me/52${selectedReg.responsable_phone?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex-1 py-3 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                                        <Phone className="w-4 h-4" /> WhatsApp
+                                    <a 
+                                        href={`https://wa.me/52${selectedReg.responsable_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${selectedReg.responsable_name}! 👋 Te contactamos del Campamento de Ministerio Elohim. Tu inscripción está confirmada${selectedReg.payment_status !== 'paid' ? ' pero tienes un pago pendiente 🙏' : ' y tu pago está listo ✅'}. ¿Tienes alguna duda?`)}`} 
+                                        target="_blank" rel="noopener noreferrer" 
+                                        className="flex-1 py-3 flex items-center justify-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors border border-green-200 dark:border-green-800"
+                                    >
+                                        <MessageCircle className="w-4 h-4" /> WhatsApp
                                     </a>
                                 </div>
                             </div>

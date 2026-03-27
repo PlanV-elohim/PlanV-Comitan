@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, Plus } from 'lucide-react';
 import { supabaseApi } from '../lib/api';
 
 const EVENT_FILTERS = ['Todos', 'Campamento 2024', 'Retiro 2025', 'Fogata', 'Generales'];
@@ -31,6 +31,7 @@ export default function Gallery() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
     const [images, setImages] = useState<GalleryImage[]>(PLACEHOLDERS);
     const [eventFilters, setEventFilters] = useState<string[]>(['Todos', 'Generales']);
+    const [displayLimit, setDisplayLimit] = useState(12);
     const [activeFilter, setActiveFilter] = useState('Todos');
     const [zoom, setZoom] = useState(false);
 
@@ -69,8 +70,10 @@ export default function Gallery() {
     }, []);
 
     const filteredImages = activeFilter === 'Todos'
-        ? images
+        ? images.slice(0, displayLimit)
         : images.filter(img => img.event === activeFilter);
+
+    const hasMore = activeFilter === 'Todos' && images.length > displayLimit;
 
     const navigateLightbox = (dir: number) => {
         if (selectedImage === null) return;
@@ -164,6 +167,20 @@ export default function Gallery() {
 
                 {filteredImages.length === 0 && (
                     <p className="text-center text-gray-400 py-16">No hay fotos en esta categoría aún.</p>
+                )}
+
+                {hasMore && (
+                    <div className="mt-12 text-center">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setDisplayLimit(prev => prev + 12)}
+                            className="px-8 py-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl font-bold text-gray-600 dark:text-gray-300 shadow-sm hover:border-primary/30 transition-all flex items-center gap-2 mx-auto"
+                        >
+                            <Plus className="w-5 h-5 text-primary" />
+                            Ver más fotos
+                        </motion.button>
+                    </div>
                 )}
             </div>
 
