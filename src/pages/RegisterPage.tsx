@@ -199,7 +199,7 @@ export default function RegisterPage() {
         return true;
     }, [camp, currentOccupancy]);
 
-    const activePrice = isPromoActive ? (camp.promo_price ?? 0) : (camp.price ?? 0);
+    const activePrice = (isPromoActive && regType === 'group') ? (camp.promo_price ?? 0) : (camp.price ?? 0);
     const cardReady = card.number.replace(/\s/g, '').length === 16 && card.name.trim().length > 1;
     const currentGroupSize = typeof groupSize === 'number' ? groupSize : (parseInt(groupSize || '2') || 2);
     const totalPrice = activePrice * (regType === 'group' ? currentGroupSize : 1);
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 </div>
             </header>
 
-            <main className="flex-1 overflow-y-auto w-full max-w-2xl mx-auto p-4 sm:p-8 flex flex-col">
+            <main className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto p-4 sm:p-8 flex flex-col">
                 {isPromoActive && step !== 'success' && (
                     <motion.div 
                         initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -252,11 +252,11 @@ export default function RegisterPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-                    className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col flex-1"
+                    className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col md:flex-row flex-1 relative"
                 >
                     {step !== 'pay' && step !== 'success' && (
-                        <>
-                            <div className="relative h-40 bg-dark shrink-0">
+                        <div className="md:w-5/12 lg:w-[450px] shrink-0 flex flex-col border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+                            <div className="relative h-40 md:h-[280px] lg:h-[350px] bg-dark shrink-0">
                                 <img src={camp.image} alt={camp.title} className="w-full h-full object-cover opacity-40" referrerPolicy="no-referrer" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
                                 <div className="absolute bottom-6 left-8 text-white">
@@ -290,10 +290,10 @@ export default function RegisterPage() {
                                     </div>
                                 );
                             })()}
-                        </>
+                        </div>
                     )}
 
-                    <div className="p-6 md:p-8 flex-1 flex flex-col">
+                    <div className="p-6 md:p-8 lg:p-12 flex-1 flex flex-col w-full h-full relative">
                         <AnimatePresence mode="wait">
                             {step === 1 && (
                                 <motion.form 
@@ -317,16 +317,15 @@ export default function RegisterPage() {
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.8 }}
                                                     type="button" 
-                                                    disabled={isPromoActive}
                                                     onClick={() => { setRegType('individual'); setGroupSize(1); }} 
-                                                    className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${regType === 'individual' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-100 dark:border-gray-800 hover:border-primary/50'} ${isPromoActive ? 'opacity-50 cursor-not-allowed hover:border-gray-100 dark:hover:border-gray-800 grayscale' : ''}`}
+                                                    className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${regType === 'individual' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
                                                 >
                                                     <div className="mb-4 w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
                                                         <User className="w-6 h-6" />
                                                     </div>
                                                     <h5 className="font-bold text-lg dark:text-white mb-1">Individual</h5>
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">Voy por mi cuenta</p>
-                                                    {isPromoActive && <div className="mt-3 text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 inline-block px-2 py-1 rounded">Desactivado por Promo</div>}
+                                                    {isPromoActive && <div className="mt-3 text-[11px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/80 inline-block px-2.5 py-1 rounded w-fit">Precio normal aplica</div>}
                                                     {regType === 'individual' && <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center"><CheckCircle2 className="w-4 h-4" /></div>}
                                                 </motion.button>
                                             )}
