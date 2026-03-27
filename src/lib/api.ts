@@ -123,6 +123,11 @@ const rawApi = {
     },
 
     groupMembers: {
+        getAll: async () => {
+            const { data, error } = await supabase.from('group_members').select('*').order('created_at', { ascending: true });
+            if (error) throw new Error(error.message);
+            return data;
+        },
         getByRegistration: async (regId: string) => {
             const { data, error } = await supabase.from('group_members').select('*').eq('registration_id', regId).order('created_at', { ascending: true });
             if (error) throw new Error(error.message);

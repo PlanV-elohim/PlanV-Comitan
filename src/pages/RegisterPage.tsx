@@ -317,14 +317,16 @@ export default function RegisterPage() {
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.8 }}
                                                     type="button" 
+                                                    disabled={isPromoActive}
                                                     onClick={() => { setRegType('individual'); setGroupSize(1); }} 
-                                                    className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${regType === 'individual' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-100 dark:border-gray-800 hover:border-primary/50'}`}
+                                                    className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${regType === 'individual' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-100 dark:border-gray-800 hover:border-primary/50'} ${isPromoActive ? 'opacity-50 cursor-not-allowed hover:border-gray-100 dark:hover:border-gray-800 grayscale' : ''}`}
                                                 >
                                                     <div className="mb-4 w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
                                                         <User className="w-6 h-6" />
                                                     </div>
                                                     <h5 className="font-bold text-lg dark:text-white mb-1">Individual</h5>
                                                     <p className="text-sm text-gray-500 dark:text-gray-400">Voy por mi cuenta</p>
+                                                    {isPromoActive && <div className="mt-3 text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30 inline-block px-2 py-1 rounded">Desactivado por Promo</div>}
                                                     {regType === 'individual' && <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center"><CheckCircle2 className="w-4 h-4" /></div>}
                                                 </motion.button>
                                             )}
