@@ -353,9 +353,14 @@ export default function RegistrationsManager() {
                 const holders = registrations.filter(r => String(r.cabin_id) === selectedCabinFilter);
                 const mems = members.filter(m => String(m.cabin_id) === selectedCabinFilter);
                 const total = holders.length + mems.length;
+
+                const genderIcon = (g: string) => g === 'male' ? '👨' : g === 'female' ? '👩' : '🧑';
+                const genderLabel = (g: string) => g === 'male' ? 'Hombre' : g === 'female' ? 'Mujer' : 'N/A';
+
                 return (
-                    <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/20 rounded-3xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/20 rounded-3xl p-6 space-y-4">
+                        {/* Header */}
+                        <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
                                 <Home className="w-5 h-5" />
                             </div>
@@ -367,21 +372,76 @@ export default function RegistrationsManager() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {holders.map((r: any) => (
-                                <span key={r.id} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full text-sm font-semibold dark:text-white shadow-sm">
-                                    <User className="w-3.5 h-3.5 text-primary" />
-                                    {r.responsable_name} {r.responsable_lastname}
-                                    <span className="ml-1 text-[10px] text-white bg-primary/80 rounded-full px-1.5 py-0.5">titular</span>
-                                </span>
-                            ))}
-                            {mems.map((m: any) => (
-                                <span key={m.id} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full text-sm font-semibold dark:text-white shadow-sm">
-                                    <User className="w-3.5 h-3.5 text-gray-400" />
-                                    {m.first_name} {m.last_name}
-                                </span>
-                            ))}
+
+                        {/* Group cards */}
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {holders.map((r: any) => {
+                                const groupMems = members.filter(m => m.registration_id === r.id);
+                                const isGroup = r.reg_type === 'group';
+                                const holderCabin = getCabinName(r.cabin_id);
+                                return (
+                                    <div key={r.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
+                                        {/* Leader row */}
+                                        <div className="flex items-start gap-2 mb-2">
+                                            <div className="text-xl leading-none mt-0.5">{genderIcon(r.gender)}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm dark:text-white truncate">{r.responsable_name} {r.responsable_lastname}</p>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                                        {isGroup ? '👑 Líder' : 'Individual'}
+                                                    </span>
+                                                    <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full">
+                                                        {genderLabel(r.gender)}
+                                                    </span>
+                                                    <span className="text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                        <Home className="w-2.5 h-2.5" />{holderCabin}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Group members in this cabin */}
+                                        {groupMems.length > 0 && (
+                                            <div className="mt-2 pl-2 border-l-2 border-gray-100 dark:border-gray-700 space-y-1.5">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                                                    {groupMems.length} acompañante{groupMems.length !== 1 ? 's' : ''}
+                                                </p>
+                                                {groupMems.map((m: any) => (
+                                                    <div key={m.id} className="flex items-center gap-1.5">
+                                                        <span className="text-sm">{genderIcon(m.gender)}</span>
+                                                        <span className="text-xs dark:text-gray-300 truncate">{m.first_name} {m.last_name}</span>
+                                                        <span className="ml-auto text-[10px] font-semibold text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                            {getCabinName(m.cabin_id)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
+
+                        {/* Unlinked members (members whose holder is in a different cabin) */}
+                        {(() => {
+                            const linkedMemIds = new Set(holders.flatMap((r: any) => members.filter(m => m.registration_id === r.id).map((m: any) => m.id)));
+                            const unlinked = mems.filter(m => !linkedMemIds.has(m.id));
+                            if (unlinked.length === 0) return null;
+                            return (
+                                <div className="pt-2 border-t border-primary/10">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Acompañantes de otros grupos</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {unlinked.map((m: any) => (
+                                            <span key={m.id} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full text-sm font-semibold dark:text-white shadow-sm">
+                                                <span>{genderIcon(m.gender)}</span>
+                                                {m.first_name} {m.last_name}
+                                                <span className="text-[10px] text-gray-400 ml-1">{getCabinName(m.cabin_id)}</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 );
             })()}
