@@ -155,7 +155,7 @@ export default function RegistrationsManager() {
                 supabaseApi.groupMembers.getAll()
             ]);
 
-            const campRegs = freshRegs.filter((r: any) => r.camp_id === campId);
+            const campRegs = freshRegs.filter((r: any) => String(r.camp_id) === String(campId));
             
             if (campRegs.length === 0) {
                 alert('⚠️ No hay ninguna inscripción en este campamento. Por favor, ve a la web pública y realiza un registro de prueba primero.');
