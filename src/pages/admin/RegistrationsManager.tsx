@@ -130,8 +130,8 @@ export default function RegistrationsManager() {
             return;
         }
         
-        const campId = Number(selectedCampFilter);
-        let campCabins = [...cabins.filter(c => c.camp_id === campId)];
+        const campId = selectedCampFilter; // Keep as string — camp IDs are UUIDs
+        let campCabins = [...cabins.filter(c => String(c.camp_id) === campId)];
         
         const confirmed = window.confirm('🪄 Asignación Mágica:\nEl sistema acomodará a los hombres en la Iglesia y a las mujeres en el Hospedaje. Si no existen estos espacios, se crearán automáticamente. ¿Deseas continuar?');
         if(!confirmed) return;
@@ -155,7 +155,7 @@ export default function RegistrationsManager() {
                 supabaseApi.groupMembers.getAll()
             ]);
 
-            const campRegs = freshRegs.filter((r: any) => String(r.camp_id) === String(campId));
+            const campRegs = freshRegs.filter((r: any) => String(r.camp_id) === campId);
             
             if (campRegs.length === 0) {
                 alert('⚠️ No hay ninguna inscripción en este campamento. Por favor, ve a la web pública y realiza un registro de prueba primero.');
