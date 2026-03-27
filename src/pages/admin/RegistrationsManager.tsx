@@ -149,7 +149,13 @@ export default function RegistrationsManager() {
                 campCabins = [...churchRes, ...lodgingRes];
             }
 
-            const campRegs = registrations.filter(r => r.camp_id === campId);
+            // Fetch absolute fresh data to avoid stale state bugs if the admin never refreshed the page
+            const [freshRegs, freshMems] = await Promise.all([
+                supabaseApi.registrations.getAll(),
+                supabaseApi.groupMembers.getAll()
+            ]);
+
+            const campRegs = freshRegs.filter((r: any) => r.camp_id === campId);
             
             if (campRegs.length === 0) {
                 alert('⚠️ No hay ninguna inscripción en este campamento. Por favor, ve a la web pública y realiza un registro de prueba primero.');
@@ -157,15 +163,15 @@ export default function RegistrationsManager() {
                 return;
             }
 
-            const campRegIds = campRegs.map(r => r.id);
-            const campMembers = members.filter(m => campRegIds.includes(m.registration_id));
+            const campRegIds = campRegs.map((r: any) => r.id);
+            const campMembers = freshMems.filter((m: any) => campRegIds.includes(m.registration_id));
 
             // Calculate current occupation
             const occupation: Record<number, number> = {};
             campCabins.forEach(c => occupation[c.id] = 0);
             
-            campRegs.forEach(r => { if(r.cabin_id) occupation[r.cabin_id] = (occupation[r.cabin_id] || 0) + 1; });
-            campMembers.forEach(m => { if(m.cabin_id) occupation[m.cabin_id] = (occupation[m.cabin_id] || 0) + 1; });
+            campRegs.forEach((r: any) => { if(r.cabin_id) occupation[r.cabin_id] = (occupation[r.cabin_id] || 0) + 1; });
+            campMembers.forEach((m: any) => { if(m.cabin_id) occupation[m.cabin_id] = (occupation[m.cabin_id] || 0) + 1; });
 
             const updatesReg: {id: string, cabin_id: number}[] = [];
             const updatesMem: {id: string, cabin_id: number}[] = [];
@@ -173,9 +179,9 @@ export default function RegistrationsManager() {
             // Grouping logic (keep groups together by gender)
             for (const r of campRegs) {
                 const groupHolders = !r.cabin_id ? [r] : [];
-                const groupMems = campMembers.filter(m => m.registration_id === r.id && !m.cabin_id);
+                const groupMems = campMembers.filter((m: any) => m.registration_id === r.id && !m.cabin_id);
                 
-                const allUnassigned = [...groupHolders.map(x => ({type: 'reg', ...x})), ...groupMems.map(x => ({type: 'mem', ...x}))];
+                const allUnassigned = [...groupHolders.map((x: any) => ({type: 'reg', ...x})), ...groupMems.map((x: any) => ({type: 'mem', ...x}))];
                 
                 // Group these unassigned people by gender
                 const byGender: Record<string, any[]>  = { male: [], female: [], other: [] };
