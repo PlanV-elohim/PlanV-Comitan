@@ -19,6 +19,7 @@ export default function RegistrationsManager() {
     const [viewMode, setViewMode] = useState<'reservations' | 'individuals'>('reservations');
     const [medicalFormData, setMedicalFormData] = useState<any | null>(null);
     const [loadingMedical, setLoadingMedical] = useState(false);
+    const [selectedCabinFilter, setSelectedCabinFilter] = useState('all');
 
     useEffect(() => { loadData(); }, []);
 
@@ -61,7 +62,15 @@ export default function RegistrationsManager() {
             .some(v => (v || '').toLowerCase().includes(q));
         const matchCamp = selectedCampFilter === 'all' || String(r.camp_id) === selectedCampFilter;
         const matchPayment = paymentFilter === 'all' || r.payment_status === paymentFilter;
-        return matchSearch && matchCamp && matchPayment;
+        // Cabin filter: check holder or any group member
+        let matchCabin = true;
+        if (selectedCabinFilter !== 'all') {
+            const cabinId = Number(selectedCabinFilter);
+            const holderMatch = r.cabin_id === cabinId;
+            const memberMatch = members.some(m => m.registration_id === r.id && m.cabin_id === cabinId);
+            matchCabin = holderMatch || memberMatch;
+        }
+        return matchSearch && matchCamp && matchPayment && matchCabin;
     });
 
     const totalSpots = filtered.reduce((acc, r) => acc + (r.group_size || 1), 0);
@@ -297,7 +306,7 @@ export default function RegistrationsManager() {
                         className="pl-12 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 w-full focus:ring-2 focus:ring-primary/20 outline-none transition-all dark:text-white"
                     />
                 </div>
-                <select value={selectedCampFilter} onChange={e => setSelectedCampFilter(e.target.value)} className="px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none font-medium min-w-48 cursor-pointer">
+                <select value={selectedCampFilter} onChange={e => { setSelectedCampFilter(e.target.value); setSelectedCabinFilter('all'); }} className="px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none font-medium min-w-48 cursor-pointer">
                     <option value="all">Todos los campamentos</option>
                     {camps.map(c => <option key={c.id} value={String(c.id)}>{c.title}</option>)}
                 </select>
@@ -307,6 +316,22 @@ export default function RegistrationsManager() {
                     <option value="paid">✅ Pagado</option>
                     <option value="cancelled">❌ Cancelado</option>
                 </select>
+                {/* Cabin filter — only show when a specific camp is selected */}
+                {selectedCampFilter !== 'all' && (() => {
+                    const campCabins = cabins.filter(c => String(c.camp_id) === selectedCampFilter);
+                    if (campCabins.length === 0) return null;
+                    return (
+                        <select value={selectedCabinFilter} onChange={e => setSelectedCabinFilter(e.target.value)} className="px-4 py-3 rounded-2xl border-2 border-primary/30 bg-white dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 outline-none font-medium min-w-48 cursor-pointer text-primary">
+                            <option value="all">🏕️ Todas las cabañas</option>
+                            {campCabins.map(c => {
+                                const holderCount = registrations.filter(r => r.cabin_id === c.id).length;
+                                const memberCount = members.filter(m => m.cabin_id === c.id).length;
+                                const total = holderCount + memberCount;
+                                return <option key={c.id} value={String(c.id)}>{c.name} ({total} personas)</option>;
+                            })}
+                        </select>
+                    );
+                })()}
                 <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
                     <button 
                         onClick={() => setViewMode('reservations')}
@@ -322,6 +347,46 @@ export default function RegistrationsManager() {
                     </button>
                 </div>
             </div>
+
+            {/* Cabin Summary Panel */}
+            {selectedCabinFilter !== 'all' && (() => {
+                const cabinId = Number(selectedCabinFilter);
+                const cabin = cabins.find(c => c.id === cabinId);
+                const holders = registrations.filter(r => r.cabin_id === cabinId);
+                const mems = members.filter(m => m.cabin_id === cabinId);
+                const total = holders.length + mems.length;
+                return (
+                    <div className="bg-gradient-to-r from-primary/10 to-orange-500/10 border border-primary/20 rounded-3xl p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
+                                <Home className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-lg dark:text-white">{cabin?.name || 'Cabaña'}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    <span className="font-bold text-primary">{total}</span> personas asignadas
+                                    {cabin?.capacity ? ` · ${total}/${cabin.capacity} cupos` : ''}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {holders.map((r: any) => (
+                                <span key={r.id} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full text-sm font-semibold dark:text-white shadow-sm">
+                                    <User className="w-3.5 h-3.5 text-primary" />
+                                    {r.responsable_name} {r.responsable_lastname}
+                                    <span className="ml-1 text-[10px] text-white bg-primary/80 rounded-full px-1.5 py-0.5">titular</span>
+                                </span>
+                            ))}
+                            {mems.map((m: any) => (
+                                <span key={m.id} className="flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-full text-sm font-semibold dark:text-white shadow-sm">
+                                    <User className="w-3.5 h-3.5 text-gray-400" />
+                                    {m.first_name} {m.last_name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Table / List */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/20 dark:shadow-none overflow-hidden">
