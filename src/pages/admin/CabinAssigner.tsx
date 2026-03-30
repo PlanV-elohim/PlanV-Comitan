@@ -15,8 +15,8 @@ type Participant = {
     first_name: string;
     last_name: string;
     gender: string;
-    cabin_id: number | null;
-    camp_id: number;
+    cabin_id: string | number | null;
+    camp_id: string | number;
     medical_cleared: boolean;
 };
 
@@ -241,28 +241,39 @@ export default function CabinAssigner() {
         setActiveParticipant(null);
         if (!over) return;
 
-        // Perform the API call to save the new cabin_id
         const participant = participants.find(p => p.id === active.id);
         if (!participant) return;
 
+        // Calculate actual drop container ID immediately to avoid React state closure staleness
+        let overContainerId = '';
+        if (cabins.map(c => c.id.toString()).includes(over.id.toString()) || over.id === 'unassigned') {
+            overContainerId = over.id.toString();
+        } else {
+            const overParticipant = participants.find(p => p.id === over.id);
+            if (overParticipant) {
+                overContainerId = overParticipant.cabin_id ? overParticipant.cabin_id.toString() : 'unassigned';
+            }
+        }
+
+        const newCabinId = overContainerId === 'unassigned' ? null : overContainerId;
+        
+        // Ensure state is perfectly matched after drop
+        setParticipants(prev => {
+            const updated = [...prev];
+            const index = updated.findIndex(p => p.id === active.id);
+            if (index !== -1) updated[index] = { ...updated[index], cabin_id: newCabinId };
+            return updated;
+        });
+
         // Perform final gender validation before saving
-        if (participant.cabin_id) {
-            const targetCabin = cabins.find(c => c.id === participant.cabin_id);
+        if (newCabinId !== null) {
+            const targetCabin = cabins.find(c => c.id === newCabinId);
             if (targetCabin && targetCabin.gender !== 'mixed') {
                 if (participant.gender !== targetCabin.gender) {
                     showToast(`No puedes asignar a un participante ${participant.gender === 'male' ? 'Hombre' : 'Mujer'} en una cabaña de ${targetCabin.gender === 'male' ? 'Hombres' : 'Mujeres'}.`, 'error');
                     
                     // Revert visual state
-                    setParticipants(prev => {
-                        const updated = [...prev];
-                        const index = updated.findIndex(p => p.id === active.id);
-                        if (index !== -1) {
-                            // Find their original cabin id (we don't easily have it unless we query DB, but we can just reload or set to unassigned)
-                            // Better: reload camp data to ensure consistency
-                            loadCampData(selectedCampId!);
-                        }
-                        return updated;
-                    });
+                    loadCampData(selectedCampId!);
                     return;
                 }
             }
@@ -271,7 +282,7 @@ export default function CabinAssigner() {
         setSaving(true);
         try {
             const table = participant.type === 'main' ? 'registrations' : 'group_members';
-            await supabase.from(table).update({ cabin_id: participant.cabin_id }).eq('id', participant.db_id);
+            await supabase.from(table).update({ cabin_id: newCabinId }).eq('id', participant.db_id);
             // Suppress success toast to avoid spam when assigning many
         } catch (error) {
             console.error(error);
