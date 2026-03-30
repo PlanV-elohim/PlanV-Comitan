@@ -224,18 +224,7 @@ export default function CabinAssigner() {
         const activeContainerId = activeParticipant.cabin_id ? activeParticipant.cabin_id.toString() : 'unassigned';
 
         if (activeContainerId !== overContainerId) {
-            // Validate Gender Rules
-            if (overContainerId !== 'unassigned') {
-                const targetCabin = cabins.find(c => c.id.toString() === overContainerId);
-                if (targetCabin && targetCabin.gender !== 'mixed') {
-                    if (activeParticipant.gender !== targetCabin.gender) {
-                        showToast(`No puedes asignar a un participante ${activeParticipant.gender === 'male' ? 'Hombre' : 'Mujer'} en una cabaña de ${targetCabin.gender === 'male' ? 'Hombres' : 'Mujeres'}.`, 'error');
-                        return;
-                    }
-                }
-            }
-
-            // Move arrays visually
+            // Move arrays visually without blocking here, otherwise hovering past an invalid cabin blocks UI
             setParticipants(prev => {
                 const updated = [...prev];
                 const index = updated.findIndex(p => p.id === activeId);
@@ -255,6 +244,29 @@ export default function CabinAssigner() {
         // Perform the API call to save the new cabin_id
         const participant = participants.find(p => p.id === active.id);
         if (!participant) return;
+
+        // Perform final gender validation before saving
+        if (participant.cabin_id) {
+            const targetCabin = cabins.find(c => c.id === participant.cabin_id);
+            if (targetCabin && targetCabin.gender !== 'mixed') {
+                if (participant.gender !== targetCabin.gender) {
+                    showToast(`No puedes asignar a un participante ${participant.gender === 'male' ? 'Hombre' : 'Mujer'} en una cabaña de ${targetCabin.gender === 'male' ? 'Hombres' : 'Mujeres'}.`, 'error');
+                    
+                    // Revert visual state
+                    setParticipants(prev => {
+                        const updated = [...prev];
+                        const index = updated.findIndex(p => p.id === active.id);
+                        if (index !== -1) {
+                            // Find their original cabin id (we don't easily have it unless we query DB, but we can just reload or set to unassigned)
+                            // Better: reload camp data to ensure consistency
+                            loadCampData(selectedCampId!);
+                        }
+                        return updated;
+                    });
+                    return;
+                }
+            }
+        }
 
         setSaving(true);
         try {
