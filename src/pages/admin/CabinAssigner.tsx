@@ -269,8 +269,8 @@ export default function CabinAssigner() {
         if (newCabinId !== null) {
             const targetCabin = cabins.find(c => c.id === newCabinId);
             if (targetCabin && targetCabin.gender !== 'mixed') {
-                if (participant.gender !== targetCabin.gender) {
-                    showToast(`No puedes asignar a un participante ${participant.gender === 'male' ? 'Hombre' : 'Mujer'} en una cabaña de ${targetCabin.gender === 'male' ? 'Hombres' : 'Mujeres'}.`, 'error');
+                if (participant.gender !== 'unknown' && participant.gender !== targetCabin.gender) {
+                    showToast(`No puedes asignar. Participante (${participant.gender}) no coincide con cabaña (${targetCabin.gender}).`, 'error');
                     
                     // Revert visual state
                     loadCampData(selectedCampId!);
