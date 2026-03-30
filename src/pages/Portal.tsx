@@ -44,10 +44,8 @@ type TabType = 'home' | 'profile' | 'reservations' | 'camps';
 export default function Portal() {
     const { user, loading, isAdmin } = useAuth();
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [mode, setMode] = useState<'login' | 'register'>('login');
-    const [statusAction, setStatusAction] = useState({ loading: false, error: '' });
+    const mapNavigation = useNavigate(); // we keep this or rename to navigate? Wait, we already have navigate
+    // Removed auth states (email, password, etc)
 
     // Portal States
     const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -70,7 +68,7 @@ export default function Portal() {
     const [loadingMembers, setLoadingMembers] = useState<Record<string, boolean>>({});
 
     // Achievement States
-    const [achievements, setAchievements] = useState<any[]>([]);
+    const [badges, setBadges] = useState<any[]>([]);
 
     useEffect(() => {
         if (user) {
@@ -114,21 +112,32 @@ export default function Portal() {
                 }
             }
 
-            // Fetch achievements
-            const { data: achData } = await supabase.from('user_achievements').select('*').eq('user_email', cleanEmail);
-            if (achData) setAchievements(achData);
+            // Fetch badges
+            const { data: badgesData } = await supabase
+                .from('user_badges')
+                .select('*, badge:badges(*)')
+                .eq('user_id', user.id)
+                .order('awarded_at', { ascending: false });
+            if (badgesData) setBadges(badgesData);
 
             // Logic to auto-grant badges
             if (regsData && regsData.length > 0) {
                 // Badge: "Expediente Completo" if at least one registration is medical_cleared
                 if (regsData.some(r => r.medical_cleared)) {
-                    await supabaseApi.achievements.grant(cleanEmail, 'expediente_completo');
+                    await supabaseApi.badges.grant(user.id, 'Expediente Completo');
                 }
                 // Badge: "Veterano" if more than 1 registration
                 if (regsData.length > 1) {
-                    await supabaseApi.achievements.grant(cleanEmail, 'veterano');
+                    await supabaseApi.badges.grant(user.id, 'Veterano');
                 }
-                // Update achievements list if any were granted (simulated reload logic or just wait for next focus)
+                
+                // Refresh badges after potential grants
+                const { data: newBadges } = await supabase
+                    .from('user_badges')
+                    .select('*, badge:badges(*)')
+                    .eq('user_id', user.id)
+                    .order('awarded_at', { ascending: false });
+                if (newBadges) setBadges(newBadges);
             }
 
         } catch (error) {
@@ -138,40 +147,7 @@ export default function Portal() {
         }
     };
 
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setStatusAction({ loading: true, error: '' });
 
-        try {
-            let authError = null;
-            if (mode === 'register') {
-                const { error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        emailRedirectTo: `${window.location.origin}/confirmado`
-                    }
-                });
-                authError = error;
-                if (!error) {
-                    setStatusAction({ loading: false, error: 'Hemos enviado un correo de confirmación a tu email, por favor, ve a tu correo para confirmar el registro.' });
-                    return;
-                }
-            } else {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                authError = error;
-            }
-            if (authError) throw authError;
-        } catch (err: any) {
-            let msg = err.message || 'Error de autenticación';
-            if (msg.includes('User already registered')) msg = 'Este correo ya está registrado. Por favor, inicia sesión.';
-            else if (msg.includes('Password should be at least')) msg = 'La contraseña debe tener al menos 6 caracteres.';
-            else if (msg.includes('Invalid login credentials')) msg = 'Correo o contraseña incorrectos.';
-            else if (msg.includes('Email not confirmed')) msg = 'Debes confirmar tu correo electrónico antes de iniciar sesión.';
-            else if (msg.includes('rate limit')) msg = 'Demasiados intentos. Por favor, espera un momento.';
-            setStatusAction({ loading: false, error: msg });
-        }
-    };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -196,69 +172,10 @@ export default function Portal() {
         await supabase.auth.signOut();
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950"><Loader2 className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>;
-
-    if (!user) {
+    if (loading || !user) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center p-4">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-2xl border border-gray-100 dark:border-gray-800">
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-tr from-primary to-orange-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-primary/30">
-                            <UserIcon className="w-8 h-8" />
-                        </div>
-                        <h1 className="text-2xl font-bold dark:text-white">Portal de Usuarios</h1>
-                        <p className="text-gray-500 text-sm mt-1">
-                            {mode === 'login'
-                                ? 'Ingresa a tu cuenta con tu correo personal'
-                                : 'Si ya reservaste, crea tu cuenta con el mismo correo personal de tu reserva.'}
-                        </p>
-                    </div>
-
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        <input
-                            type="email"
-                            required
-                            placeholder={mode === 'register' ? 'Tu Correo Personal (el de tu reserva)' : 'Correo Electrónico'}
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
-                        />
-                        <input
-                            type="password"
-                            required
-                            placeholder={mode === 'register' ? 'Crea una Contraseña' : 'Contraseña'}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
-                        />
-
-                        {statusAction.error && (
-                            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-sm text-center font-medium bg-red-50 dark:bg-red-500/10 p-3 rounded-xl border border-red-100 dark:border-red-900/50">
-                                {statusAction.error}
-                            </motion.p>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={statusAction.loading}
-                            className="w-full bg-gradient-to-r from-primary to-orange-500 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
-                        >
-                            {statusAction.loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta')}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 text-center space-y-4">
-                        <button
-                            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                            className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-                        >
-                            {mode === 'login' ? '¿No tienes cuenta? Regístrate aquí' : '¿Ya tienes cuenta? Inicia sesión'}
-                        </button>
-
-                    </div>
-
-                    <a href="/" className="block text-center mt-6 text-sm font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">&larr; Volver a la página principal</a>
-                </motion.div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+                <Loader2 className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
             </div>
         );
     }
@@ -438,23 +355,24 @@ export default function Portal() {
                                         </h3>
                                     </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        {achievements.map((ach) => {
-                                            const isExpediente = ach.badge_id === 'expediente_completo';
-                                            const isVeterano = ach.badge_id === 'veterano';
+                                        {badges.map((userBadge) => {
+                                            const badgeName = userBadge.badge?.name || 'Insignia';
+                                            const isExpediente = badgeName === 'Expediente Completo';
+                                            const isVeterano = badgeName === 'Veterano';
 
                                             return (
-                                                <motion.div key={ach.id} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
+                                                <motion.div key={userBadge.id} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
                                                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-inner ${isExpediente ? 'bg-gradient-to-br from-green-100 to-emerald-200 text-green-700' : (isVeterano ? 'bg-gradient-to-br from-purple-100 to-indigo-200 text-indigo-700' : 'bg-gradient-to-br from-red-100 to-orange-200 text-primary')}`}>
                                                         {isExpediente ? <ShieldCheck className="w-7 h-7" /> : (isVeterano ? <Star className="w-7 h-7" /> : <Zap className="w-7 h-7" />)}
                                                     </div>
                                                     <p className="text-sm font-black uppercase tracking-tighter dark:text-white leading-tight">
-                                                        {isExpediente ? 'Expediente OK' : (isVeterano ? 'Veterano' : ach.badge_id)}
+                                                        {badgeName}
                                                     </p>
-                                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(ach.earned_at).toLocaleDateString()}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(userBadge.awarded_at).toLocaleDateString()}</p>
                                                 </motion.div>
                                             );
                                         })}
-                                        {achievements.length === 0 && (
+                                        {badges.length === 0 && (
                                             <div className="col-span-full py-10 text-center bg-white dark:bg-gray-900 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
                                                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                                                     <Award className="w-8 h-8 text-gray-300 dark:text-gray-600" />

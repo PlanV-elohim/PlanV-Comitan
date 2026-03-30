@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabaseApi } from '../../lib/api';
-import { Home, Plus, Trash2, Edit2, Loader2, Save, X } from 'lucide-react';
+import { Home, Plus, Trash2, Edit2, Loader2, Save, X, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
@@ -100,9 +101,14 @@ export default function CabinsManager() {
                     <h1 className="text-3xl lg:text-4xl font-bold dark:text-white tracking-tight mb-2">Gestor de Cabañas</h1>
                     <p className="text-gray-500 dark:text-gray-400 text-lg">Crea dormitorios y escuadrones para logística.</p>
                 </div>
-                <button onClick={() => openForm()} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 shrink-0">
-                    <Plus className="w-5 h-5" /> Nueva Cabaña
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <Link to="/admin/cabanas/asignacion" className="flex items-center justify-center w-full sm:w-auto gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0">
+                        <Users className="w-5 h-5" /> Asignación Visual
+                    </Link>
+                    <button onClick={() => openForm()} className="flex items-center justify-center w-full sm:w-auto gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 shrink-0">
+                        <Plus className="w-5 h-5" /> Nueva Cabaña
+                    </button>
+                </div>
             </header>
 
             {loading ? (

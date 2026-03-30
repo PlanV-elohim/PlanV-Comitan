@@ -266,18 +266,30 @@ const rawApi = {
         }
     },
 
-    achievements: {
-        getByUser: async (email: string) => {
-            const { data, error } = await supabase.from('user_achievements').select('*').eq('user_email', email).order('earned_at', { ascending: false });
+    badges: {
+        getByUser: async (userId: string) => {
+            const { data, error } = await supabase
+                .from('user_badges')
+                .select('*, badge:badges(*)')
+                .eq('user_id', userId)
+                .order('awarded_at', { ascending: false });
             if (error) throw new Error(error.message);
             return data;
         },
-        grant: async (email: string, badgeId: string) => {
-            // Check if already has it
-            const { data: existing } = await supabase.from('user_achievements').select('id').eq('user_email', email).eq('badge_id', badgeId).maybeSingle();
+        grant: async (userId: string, badgeName: string) => {
+            // First find the badge id by its name
+            const { data: badgeData } = await supabase.from('badges').select('id').eq('name', badgeName).maybeSingle();
+            if (!badgeData) return null; // Badge doesn't exist
+            
+            // Check if user already has it
+            const { data: existing } = await supabase.from('user_badges')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('badge_id', badgeData.id)
+                .maybeSingle();
             if (existing) return existing;
 
-            const { data, error } = await supabase.from('user_achievements').insert([{ user_email: email, badge_id: badgeId }]).select();
+            const { data, error } = await supabase.from('user_badges').insert([{ user_id: userId, badge_id: badgeData.id }]).select();
             if (error) throw new Error(error.message);
             return data;
         }

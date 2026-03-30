@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Users, Search, X, Phone, Mail, MapPin, Calendar, User, Church, Hash, ChevronRight, Download, CheckCircle2, ShieldAlert, HeartPulse, Home, Printer, MessageCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { supabaseApi } from '../../lib/api';
+import { Link } from 'react-router-dom';
 
 export default function RegistrationsManager() {
     const [registrations, setRegistrations] = useState<any[]>([]);
@@ -298,8 +299,11 @@ export default function RegistrationsManager() {
                     <h1 className="text-3xl lg:text-4xl font-bold dark:text-white tracking-tight mb-2">Reservaciones</h1>
                     <p className="text-gray-500 dark:text-gray-400 text-lg">Consulta y gestiona todas las inscripciones recibidas.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button disabled={magicAssigning} onClick={runMagicAssignment} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transform transition-all disabled:opacity-50 shrink-0">
+                <div className="flex items-center gap-3 flex-wrap">
+                    <Link to="/admin/cabanas/asignacion" className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm shrink-0 w-full md:w-auto">
+                        <Users className="w-4 h-4" /> Asignación Drag&Drop
+                    </Link>
+                    <button disabled={magicAssigning} onClick={runMagicAssignment} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] transform transition-all disabled:opacity-50 shrink-0 w-full md:w-auto">
                         {magicAssigning ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>🪄</span>} 
                         {magicAssigning ? 'Asignando...' : 'Asignación Mágica'}
                     </button>
